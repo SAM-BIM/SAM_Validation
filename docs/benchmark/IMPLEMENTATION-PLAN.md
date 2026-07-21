@@ -183,7 +183,7 @@ If B1a's build-order verification finds the change must touch a repo not listed 
 - **Objective:** encode the v1 schema + deterministic serializer + shared CLI host in `SAM.Analytical.Benchmark`, output to `SAM_Validation\build\`.
 - **Repo/branch:** `SAM_Validation` / `feature/benchmark-b1-schema`. New `SAM_Validation\SAM.Analytical.Benchmark\SAM.Analytical.Benchmark.csproj` (netstandard2.0, `System.Text.Json` 8.0.5, **no SAM/engine refs**, OutputPath → `..\build\` mirroring SAM.Core convention), namespace `SAM.Analytical.Benchmark`.
   - `Classes\` DTOs (§7): `BenchmarkDocument`, `BenchmarkProvenance`, `EngineInfo`, `WeatherInfo`, `ModelResult`, `SpaceResult`, `LoadTypeResult`, `MetricValue` (**`double? Value`, `Unit`, `bool Available`**), enums `BenchmarkRoute`, `EngineKind`, `MetricKey`, `Unit`, `RunState`.
-  - `Query\`: `Serializer` (STJ; sorted keys via explicit `JsonObject` build; `InvariantCulture`; fixed rounding), `SchemaVersion` const, `Validate(BenchmarkDocument)` — enforces the availability invariant.
+  - `Query\`: `Serializer` (STJ; sorted keys via explicit `JsonObject` build; `InvariantCulture`; full finite `double` precision without result rounding), `SchemaVersion` const, `Validate(BenchmarkDocument)` — enforces the availability invariant.
   - `Cli\`: `BenchmarkCli.Run(string[] args, Func<BenchmarkArgs,int> body)`, `BenchmarkArgs` (`--model/--weather/--out/--route/--tolerance-profile`), invariant I/O, exit codes (`0 ok / 2 usage / 3 io / 4 engine`).
   - `Variables\`: `Tolerances` (`Warn=0.05`, `Fail=0.15`, `NearZeroFloor`), `SchemaVersionInfo`.
   - Test project `SAM_Validation\SAM_Analytical_Benchmark_Tests\` (net8.0 MSTest): round-trip determinism, invariant culture, key ordering, **availability invariant (available⇒non-null; unavailable⇒null; real 0⇒0+available)**, schema-version gate.
@@ -258,7 +258,7 @@ If B1a's build-order verification finds the change must touch a repo not listed 
 - **Dependencies:** B1a.
 - **Commit boundaries:** (1) classes + `Compare`/`AlignSpaces`; (2) banding + circular-hour + reconciliation; (3) report writers; (4) `Program.cs`; (5) fabricated tests.
 - **Rollback:** self-contained; revert PR.
-- **Risks:** non-determinism → sorted keys + invariant culture + fixed rounding + byte-stability test.
+- **Risks:** non-determinism → sorted keys + invariant culture + full finite `double` precision without result rounding + byte-stability test.
 
 ### B4 — Benchmark corpus
 - **Objective:** graduated **engine-independent** source models (single→multi-zone→reviewed production), separate from generated artefacts.
@@ -343,7 +343,7 @@ Ordering rule: **B1a first**; B1b/B2/B3 parallelisable after B1a (B2 also gates 
 
 ## 7. Benchmark schema outline (v1.0.0)
 
-`benchmark-<engine>[-<route>].json` — serialized by `SAM.Analytical.Benchmark.Query.Serializer` (System.Text.Json, invariant culture, sorted keys, fixed rounding).
+`benchmark-<engine>[-<route>].json` — serialized by `SAM.Analytical.Benchmark.Query.Serializer` (System.Text.Json, invariant culture, sorted keys, full finite `double` precision without result rounding).
 
 **Availability invariant (enforced by `Validate`):** `available=true ⇒ value` non-null; `available=false ⇒ value` **null**; a real measured zero is `value:0, available:true`. Unavailable metrics **never** carry `0`.
 
@@ -429,7 +429,7 @@ Ordering rule: **B1a first**; B1b/B2/B3 parallelisable after B1a (B2 also gates 
 | Engine coupling leaking into comparator/GH | Violates isolation | Comparator/GH ref only schema (+comparator) lib; CI reference-check. |
 | Unavailable metric encoded as 0 | Silent false comparison | `MetricValue` invariant (`available=false ⇒ value null`), enforced by `Validate` + tests. |
 | B2b greenfield reverse translator | Wasted effort | Spike-gated; strictly optional; distinct route tag. |
-| Report non-determinism | Non-reproducible gate | Sorted keys, invariant culture, fixed rounding; byte-stability tests. |
+| Report non-determinism | Non-reproducible gate | Sorted keys, invariant culture, full finite `double` precision without result rounding; byte-stability tests. |
 | Tolerances mistaken as validated | Overclaiming | Label provisional; configurable profiles; corpus-driven revision later. |
 | Conditioning pairing frozen too early | Invalid comparison baked into B1/B2 | D10: candidate in B0, frozen only after B2 SingleBox validation. |
 | Cross-laptop path drift | Irreproducible | Portable JSON, relative layouts, no absolute paths committed. |

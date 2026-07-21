@@ -9,6 +9,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SAM_Mollier", "SAM_Mollier\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SAM_Validation", "SAM_Validation\SAM_Validation.csproj", "{5A18E1C0-C2A7-4709-AD6F-4B77F41ED239}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SAM.Analytical.Benchmark", "SAM.Analytical.Benchmark\SAM.Analytical.Benchmark.csproj", "{A0E10A5F-698A-4D12-A76D-2F8D293B89E1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SAM.Analytical.Benchmark.Tests", "SAM.Analytical.Benchmark.Tests\SAM.Analytical.Benchmark.Tests.csproj", "{A6C4F453-F2A9-43E4-8628-968868162703}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0B5632B9-81D8-46FF-B139-112C05D4428C}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
@@ -32,6 +36,14 @@ Global
 		{5A18E1C0-C2A7-4709-AD6F-4B77F41ED239}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5A18E1C0-C2A7-4709-AD6F-4B77F41ED239}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5A18E1C0-C2A7-4709-AD6F-4B77F41ED239}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A0E10A5F-698A-4D12-A76D-2F8D293B89E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A0E10A5F-698A-4D12-A76D-2F8D293B89E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A0E10A5F-698A-4D12-A76D-2F8D293B89E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A0E10A5F-698A-4D12-A76D-2F8D293B89E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A6C4F453-F2A9-43E4-8628-968868162703}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6C4F453-F2A9-43E4-8628-968868162703}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6C4F453-F2A9-43E4-8628-968868162703}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6C4F453-F2A9-43E4-8628-968868162703}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
