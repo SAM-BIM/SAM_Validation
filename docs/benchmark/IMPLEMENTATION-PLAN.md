@@ -1,6 +1,6 @@
 # SAM TAS ↔ OpenStudio Benchmark Programme — Implementation Plan (B0–B6)
 
-> **Revision 2** — incorporates stakeholder corrections: (1) `feature/benchmark-*` branch names; (2) unavailable metrics carry `value: null`; (3) dual model hashes; (4) build-order verified to live in per-repo CI, not a SAM PR; (5) conditioning equivalence is a **candidate** in B0, frozen only after the first TAS SingleBox validation; (6) B5 GH host deferred to B5 kickoff; plus a per-milestone **model-allocation** plan and a **mandatory Git rules** block for every implementation prompt.
+> **Revision 3** — incorporates stakeholder corrections: (1) `feature/benchmark-*` branch names; (2) unavailable metrics carry `value: null`; (3) dual model hashes; (4) build-order verified to live in per-repo CI, not a SAM PR; (5) conditioning equivalence is a **candidate** in B0, frozen only after the first TAS SingleBox validation; (6) B5 GH host deferred to B5 kickoff; (7) **commit and push the feature branch after every stage** for multi-laptop continuity; plus a per-milestone **model-allocation** plan and a **mandatory Git rules** block for every implementation prompt.
 
 ## Context
 
@@ -487,6 +487,8 @@ Run **one milestone per session**; do not hand B1–B6 to a single model in one 
 
 Kimi fits B2 (well-specified orchestration around existing APIs) and B4/B6 (mechanical corpus/doc assembly). Deterministic-serialization, comparator, and SDK-spike work go to Codex 5.6-SOL High. **Immediate next step: B0 with Codex 5.6-SOL High; after B0 is reviewed and merged, start B1a in a fresh session.**
 
+Because sessions run on different laptops, **each session ends by committing and pushing its feature branch(es)** so the next session resumes from remote — see the *Multi-laptop continuity* rule in §13.
+
 ---
 
 ## 13. Mandatory Git & repository rules (include in EVERY implementation prompt)
@@ -513,3 +515,12 @@ git checkout -b <milestone-feature-branch>
 - If a repo lacks `sow/2026-Q3`, or it cannot fast-forward cleanly, **stop before modifying files** and report the exact repo and Git state.
 - **Do not reuse one branch across repositories.** Each repo gets its own feature branch, commits and PR.
 - **Before implementation, verify the files named in the plan actually live in the stated repository.** In particular, confirm the build-order change lives in each engine repo's own `.github/workflows/build.yml` (verified: the root `BuildAlls*` files are untracked and belong to no repo; do **not** rely on or commit them).
+
+### Multi-laptop continuity (REQUIRED — Michal works across several laptops)
+
+Michal moves between several laptops with different Windows user profiles (see [[two-laptop-workspace-paths]]). To avoid stranding work on one machine:
+
+- **Commit and push the feature branch at the end of every B stage/session** — a stage is only "done for this session" once `git push` has succeeded. Never leave a milestone's work committed-but-unpushed, or uncommitted, on a single laptop.
+- **Push work-in-progress commits too**, not only at PR time, so any laptop always has the latest state. Keep messages conventional (`docs:`/`feat:`/`fix:`/…) and end them with the `Co-Authored-By` trailer.
+- **When resuming a stage on another laptop**, do NOT recreate the branch: `git fetch origin` → `git checkout feature/benchmark-<id>` → `git pull --ff-only origin feature/benchmark-<id>`, then continue. If the local branch is behind and cannot fast-forward, stop and report before editing.
+- Because each repo has its own feature branch, **push every affected repo's branch** at stage end (a milestone that touches two repos must push both).
