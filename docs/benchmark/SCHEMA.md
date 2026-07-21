@@ -4,7 +4,7 @@
 
 `benchmark-<engine>[-<route>].json` is the portable hand-off between an engine-specific producer and the engine-neutral comparator. The schema owns measurements and run provenance; it does not serialize engine runtime objects or the SAM result graph.
 
-The implementation will use System.Text.Json with invariant-culture numbers, deterministic property order, deterministic array order, and fixed numeric rounding. JSON object order is not semantic, but deterministic output is required for reproducibility.
+The implementation will use System.Text.Json with invariant-culture numbers, deterministic property order, deterministic array order, and full finite `double` precision without result rounding. JSON object order is not semantic, but deterministic output is required for reproducibility.
 
 ## Top-level document
 
