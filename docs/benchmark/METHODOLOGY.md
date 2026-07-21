@@ -57,6 +57,27 @@ Each producer records:
 
 Absolute machine paths are runtime details and must not be committed or used as identities. Files are identified by portable names and content hashes.
 
+### The two model hashes
+
+`sourceFileHash` is the SHA-256 of the exact original input-file bytes. It proves the producers read the identical file and nothing more; re-saving the same model with different formatting changes it.
+
+`canonicalModelHash` is the SHA-256 of the canonical representation of the neutral loaded SAM model. It proves the producers simulated the same model once non-semantic ordering and formatting variation has been removed.
+
+Each producer computes the canonical hash by loading the source JSON into an `AnalyticalModel`, converting that model back to its normal SAM JSON representation through the shared SAM serialization API **before applying any engine-specific modification**, canonicalizing that JSON with the engine-neutral helper in `SAM.Analytical.Benchmark`, and hashing the canonical UTF-8 bytes:
+
+```text
+source bytes
+  → sourceFileHash
+  → deserialize AnalyticalModel
+  → SAM ToJsonObject
+  → canonical JSON v1
+  → canonicalModelHash
+```
+
+The canonical hash always describes the neutral loaded model, never an engine artefact. Hashing an OpenStudio model, gbXML, a Tas T3D/TBD/TSD file, simulation results, or an engine working directory yields a value that cannot be compared across engines; that is a contract violation, not an approximation.
+
+Producers must not invent their own canonicalization. Both engines call the same helper, so a canonical-hash difference means a model difference rather than an implementation difference. The rules are versioned as `canonicalizationVersion`, currently `1.0.0`, and are specified exactly in [SCHEMA.md](SCHEMA.md). Changing them requires a new canonicalization version, because a changed algorithm changes every hash it produces; a comparator that sees two different canonicalization versions reports the mismatch instead of treating the hashes as comparable evidence.
+
 ## Result extraction
 
 Producers read the existing SAM result model. Whole-model values come from `AnalyticalModelSimulationResult`; space values come from `SpaceSimulationResult` separated by `LoadType.Heating` and `LoadType.Cooling`. Engine-specific `Query.Source()` values are retained as provenance rather than treated as metric values.
