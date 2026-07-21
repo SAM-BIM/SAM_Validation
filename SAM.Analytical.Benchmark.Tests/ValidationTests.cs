@@ -286,11 +286,89 @@ namespace SAM.Analytical.Benchmark.Tests
         {
             BenchmarkDocument commit = TestDocuments.CreateValid();
             commit.Provenance!.SamCommit = "not-a-commit";
-            BenchmarkDocument version = TestDocuments.CreateValid();
-            version.Provenance!.CanonicalizationVersion = "v1";
 
             AssertInvalid(commit, "provenance.commit.malformed");
-            AssertInvalid(version, "provenance.canonicalizationVersion");
+
+            foreach (string malformed in new[] { "v1", "1.0", "1.0.0-rc1", "01.0.0", " ", "" })
+            {
+                BenchmarkDocument version = TestDocuments.CreateValid();
+                version.Provenance!.CanonicalizationVersion = malformed;
+                AssertInvalid(version, "provenance.canonicalizationVersion");
+            }
+
+            BenchmarkDocument missing = TestDocuments.CreateValid();
+            missing.Provenance!.CanonicalizationVersion = null;
+            AssertInvalid(missing, "provenance.canonicalizationVersion");
+        }
+
+        [TestMethod]
+        public void ValidationAcceptsTheCanonicalizationVersionConstant()
+        {
+            BenchmarkDocument document = TestDocuments.CreateValid();
+            document.Provenance!.CanonicalizationVersion = BenchmarkCanonicalization.CurrentVersion;
+
+            BenchmarkValidationResult result = BenchmarkValidator.Validate(document);
+
+            Assert.AreEqual("1.0.0", BenchmarkCanonicalization.CurrentVersion);
+            Assert.IsTrue(result.IsValid);
+            Assert.AreEqual(0, result.Warnings.Count);
+        }
+
+        [TestMethod]
+        public void UnsupportedCanonicalizationMajorVersionIsRejected()
+        {
+            foreach (string unsupported in new[] { "2.0.0", "0.9.0", "10.0.0" })
+            {
+                BenchmarkDocument document = TestDocuments.CreateValid();
+                document.Provenance!.CanonicalizationVersion = unsupported;
+                AssertInvalid(document, "provenance.canonicalizationVersion.major");
+            }
+        }
+
+        [TestMethod]
+        public void CanonicalizationVersionIsRequiredEvenWhenAFailureOmitsTheCanonicalHash()
+        {
+            // A failure document may omit hashes, but must still declare which rules it would have used.
+            BenchmarkDocument document = TestDocuments.CreateValid();
+            document.Provenance!.State = RunState.Failure;
+            document.Provenance.SourceFileHash = null;
+            document.Provenance.CanonicalModelHash = null;
+            document.Provenance.Weather!.Hash = null;
+
+            Assert.IsTrue(BenchmarkValidator.Validate(document).IsValid);
+
+            document.Provenance.CanonicalizationVersion = null;
+            AssertInvalid(document, "provenance.canonicalizationVersion");
+        }
+
+        [TestMethod]
+        public void SuccessfulDocumentStillRequiresBothTheCanonicalHashAndItsVersion()
+        {
+            BenchmarkDocument noHash = TestDocuments.CreateValid();
+            noHash.Provenance!.CanonicalModelHash = null;
+            BenchmarkDocument malformedHash = TestDocuments.CreateValid();
+            malformedHash.Provenance!.CanonicalModelHash = "sha256:NOTHEX";
+            BenchmarkDocument noVersion = TestDocuments.CreateValid();
+            noVersion.Provenance!.CanonicalizationVersion = null;
+
+            Assert.AreEqual(RunState.Success, TestDocuments.CreateValid().Provenance!.State);
+            AssertInvalid(noHash, "provenance.hash.required");
+            AssertInvalid(malformedHash, "provenance.hash.malformed");
+            AssertInvalid(noVersion, "provenance.canonicalizationVersion");
+        }
+
+        [TestMethod]
+        public void GoldenBenchmarkDocumentRemainsValidUnderTheCanonicalizationContract()
+        {
+            string path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "golden-benchmark.json");
+
+            BenchmarkDocument document = BenchmarkSerializer.Read(path);
+            BenchmarkValidationResult result = BenchmarkValidator.Validate(document);
+
+            Assert.IsTrue(result.IsValid, string.Join(", ", result.Errors.Select(x => x.Code)));
+            Assert.AreEqual(0, result.Warnings.Count);
+            Assert.AreEqual(BenchmarkCanonicalization.CurrentVersion, document.Provenance!.CanonicalizationVersion);
+            Assert.IsNotNull(document.Provenance.CanonicalModelHash);
         }
 
         private static void AssertInvalid(BenchmarkDocument document, string expectedCode)

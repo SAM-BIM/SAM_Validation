@@ -22,7 +22,7 @@ namespace SAM.Analytical.Benchmark.Tests
                     SourceModelGuid = "0123456789abcdef0123456789abcdef",
                     SourceFileHash = HashA,
                     CanonicalModelHash = HashB,
-                    CanonicalizationVersion = "1.0.0",
+                    CanonicalizationVersion = BenchmarkCanonicalization.CurrentVersion,
                     SamCommit = "1111111111111111111111111111111111111111",
                     RunnerCommit = "2222222222222222222222222222222222222222",
                     Engine = new BenchmarkEngine
