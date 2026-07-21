@@ -38,6 +38,14 @@ namespace SAM.Analytical.Benchmark.Tests
         }
 
         [TestMethod]
+        public void TimeoutOutsideTimeSpanRangeIsAUsageError()
+        {
+            BenchmarkArgumentParseResult parsed = BenchmarkArgumentParser.Parse(new[] { "--timeout-seconds", "100000000000000000000000000000" });
+
+            Assert.ThrowsException<ArgumentException>(() => parsed.Arguments!.GetTimeout());
+        }
+
+        [TestMethod]
         public void HostPrintsHelpWithoutInvokingBody()
         {
             var output = new StringWriter();

@@ -117,6 +117,15 @@ namespace SAM.Analytical.Benchmark.Tests
         }
 
         [TestMethod]
+        public void NonStringTimestampIsRejectedAsInvalidJson()
+        {
+            string json = BenchmarkSerializer.Serialize(TestDocuments.CreateValid())
+                .Replace("\"runTimestampUtc\": \"2026-07-21T12:00:00Z\"", "\"runTimestampUtc\": 123");
+
+            Assert.ThrowsException<System.Text.Json.JsonException>(() => BenchmarkSerializer.Deserialize(json));
+        }
+
+        [TestMethod]
         public void NegativeAndNonFiniteDurationsAreRejected()
         {
             BenchmarkDocument negative = TestDocuments.CreateValid();

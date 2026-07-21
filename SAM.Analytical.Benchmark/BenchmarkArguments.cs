@@ -54,7 +54,14 @@ namespace SAM.Analytical.Benchmark
                 throw new ArgumentException($"Option '--{NormalizeName(name)}' must be a positive number of seconds.", nameof(name));
             }
 
-            return TimeSpan.FromSeconds(seconds);
+            try
+            {
+                return TimeSpan.FromSeconds(seconds);
+            }
+            catch (OverflowException exception)
+            {
+                throw new ArgumentException($"Option '--{NormalizeName(name)}' is outside the supported timeout range.", nameof(name), exception);
+            }
         }
 
         internal static string NormalizeName(string name)

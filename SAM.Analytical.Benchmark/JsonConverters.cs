@@ -130,6 +130,11 @@ namespace SAM.Analytical.Benchmark
     {
         public override DateTimeOffset Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
+            if (reader.TokenType != JsonTokenType.String)
+            {
+                throw new JsonException("Expected an ISO 8601 timestamp string.");
+            }
+
             string? text = reader.GetString();
             if (text == null || !DateTimeOffset.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out DateTimeOffset value))
             {
