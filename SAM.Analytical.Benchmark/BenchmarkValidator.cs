@@ -69,10 +69,7 @@ namespace SAM.Analytical.Benchmark
             ValidateOptionalHash(provenance.SourceFileHash, "$.provenance.sourceFileHash", issues);
             ValidateOptionalHash(provenance.CanonicalModelHash, "$.provenance.canonicalModelHash", issues);
 
-            if (!BenchmarkSchema.TryParseVersion(provenance.CanonicalizationVersion, out _, out _, out _))
-            {
-                AddError(issues, "provenance.canonicalizationVersion", "$.provenance.canonicalizationVersion", "A semantic canonicalization version is required.");
-            }
+            ValidateCanonicalizationVersion(provenance.CanonicalizationVersion, issues);
 
             RequireCommit(provenance.SamCommit, "$.provenance.samCommit", issues);
             RequireCommit(provenance.RunnerCommit, "$.provenance.runnerCommit", issues);
@@ -123,6 +120,21 @@ namespace SAM.Analytical.Benchmark
                 AddError(issues, "provenance.engine.versionExplanation", "$.provenance.engine.version", "An unavailable engine version must be explained in warnings or notes.");
             }
 
+        }
+
+        private static void ValidateCanonicalizationVersion(string? version, ICollection<ValidationIssue> issues)
+        {
+            // Applies to every document, including failures: a document that reports no canonical hash
+            // must still declare which rules it would have used.
+            switch (BenchmarkCanonicalization.GetCompatibility(version))
+            {
+                case SchemaCompatibility.Malformed:
+                    AddError(issues, "provenance.canonicalizationVersion", "$.provenance.canonicalizationVersion", "A semantic canonicalization version is required.");
+                    break;
+                case SchemaCompatibility.IncompatibleMajor:
+                    AddError(issues, "provenance.canonicalizationVersion.major", "$.provenance.canonicalizationVersion", $"Canonicalization major version must match {BenchmarkCanonicalization.CurrentVersion}.");
+                    break;
+            }
         }
 
         private static void ValidateEngine(BenchmarkEngine? engine, ICollection<ValidationIssue> issues)
