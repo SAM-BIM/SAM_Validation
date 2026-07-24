@@ -32,7 +32,7 @@ This plan is grounded in direct repository inspection (findings in §2). Three a
 │(netstd2.0)   │ │(Interop.T*) │ │           │  │                 │   │   STJ only, ZERO deps.   │
 └──┬───────────┘ └────┬────────┘ └───────────┘  └────────┬────────┘   │  → SAM_Validation\build\ │
    │ ref (HintPath)   │ ref (HintPath)                   │ ProjectRef  └──────────┬─────────────┘
-   │  ..\..\SAM_Validation\build\SAM.Analytical.Benchmark.dll                     │ (built FIRST)
+   │  ..\..\..\SAM_Validation\build\SAM.Analytical.Benchmark.dll                  │ (built FIRST)
    └───────────┬──────┴───────────────────────┬──────────┴───────────┬───────────┘
         producer writes DTO           producer writes DTO      comparator + reports read DTO
       (SAM_OpenStudio CLI)            (SAM_Tas CLI, TAS laptop) (SAM_Validation CLI, any laptop)
@@ -205,7 +205,7 @@ If B1a's build-order verification finds the change must touch a repo not listed 
   - `Modify\ToBenchmark.cs`: `BenchmarkDocument ToBenchmark(this AnalyticalModel, OpenStudioBenchmarkContext)` — reads model + space results, maps to DTOs (Guid+Name per space).
   - `Classes\OpenStudioBenchmarkContext.cs`: engine/weather/design-day/route metadata (`OpenStudioVersion()`, `EnergyPlusVersion()`, epw hash, `RuntimeSeconds`, warning counts).
   - `Program.cs`: `BenchmarkCli.Run` → load model → `ToOpenStudio(epw, outDir, runOptions{AssignIdealLoads=true})` (or `RunAsync`+timeout) → `ToBenchmark` → write JSON.
-  - HintPath ref `..\..\SAM_Validation\build\SAM.Analytical.Benchmark.dll`.
+  - HintPath ref `..\..\..\SAM_Validation\build\SAM.Analytical.Benchmark.dll` (three `..`: the producer project sits three levels deep, matching the repo's existing `..\..\..\SAM\build\SAM.Core.dll` references).
   - **CI (`build.yml`):** add a step to clone `SAM_Validation` @ matching branch and `msbuild` **only** `SAM.Analytical.Benchmark.csproj` → `SAM_Validation\build\` before building SAM_OpenStudio.
   - NUnit tests (`benchmark\` folder): **offline** producer test on a synthetic-SQLite model (reuse `C5`) → committed golden JSON; one `[Category("Simulation")]` live end-to-end on `SingleBox()` that also **captures the raw SQL consumption value to pin the unit**.
 - **Reused APIs:** `ToOpenStudio/ToOpenStudioAsync`, `OpenStudioSimulationRunner`, `Convert.ToSAM`/`ToSAM_SpaceSimulationResults`, `AddResults`, `Query.Source()`, `OpenStudioVersion/EnergyPlusVersion`, `IntervalHourOfYear`.
@@ -225,7 +225,7 @@ If B1a's build-order verification finds the change must touch a repo not listed 
   - `Modify\ToBenchmark.cs`: `BenchmarkDocument ToBenchmark(this AnalyticalModel, TasBenchmarkContext)`.
   - `Classes\TasBenchmarkContext.cs`: TAS provenance (`Query\TasVersion.cs` reading TAS exe FileVersion from the registry install dir; weather/design-day identity; `Timings` duration; `successful`/exception capture).
   - `Program.cs`: `BenchmarkCli.Run` → load model → ensure shared gbXML (via `SAM.Analytical.gbXML` export if absent) → `WorkflowSettings{ AddIZAMs=true, Sizing=true, Simulate=true, UnmetHours=true, … }` → `new WorkflowCalculator(settings).Calculate(model)` → **explicit building-results read** for annual energy → `ToBenchmark` → write JSON. Watchdog hard-timeout (no cancellation).
-  - HintPath ref `..\..\SAM_Validation\build\SAM.Analytical.Benchmark.dll`.
+  - HintPath ref `..\..\..\SAM_Validation\build\SAM.Analytical.Benchmark.dll` (three `..`: the producer project sits three levels deep, matching the repo's existing `..\..\..\SAM\build\SAM.Core.dll` references).
   - **CI (`build.yml`):** same clone + build-only-schema step as B1b.
   - **Docs:** `SAM_Tas\benchmark\README.md` — TAS-laptop prerequisites (licensed EDSL install, registry keys), CLI, outputs.
 - **Reused APIs:** `WorkflowCalculator.Calculate`, `WorkflowSettings`, `Modify.AddResults`, `Query.Sizing`, `Query.UnmetHours`, `Modify.UpdateDesignLoads`, `Convert.ToSAM` (building results), `SAM.Analytical.gbXML` export, `Query.Source()`.
