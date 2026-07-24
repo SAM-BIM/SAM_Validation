@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>benchmark-compare</AssemblyName>
+    <RootNamespace>SAM.Analytical.Benchmark.Compare</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!--
+    The comparator is engine-independent: it reads two benchmark JSON documents and never depends on
+    SAM.Analytical.OpenStudio, SAM.Analytical.Tas, the OpenStudio SDK, or the TAS interop assemblies.
+    It references ONLY the neutral schema library (a ProjectReference because both projects live in the
+    SAM_Validation repo). A CI reference-check (see .github/workflows/build.yml) fails the build if any
+    engine assembly ever appears here.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\SAM.Analytical.Benchmark\SAM.Analytical.Benchmark.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="SAM.Analytical.Benchmark.Compare.Tests" />
+  </ItemGroup>
+
+</Project>

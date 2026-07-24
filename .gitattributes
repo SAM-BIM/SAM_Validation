@@ -1,0 +1,5 @@
+# Benchmark golden fixtures are asserted byte-for-byte, so they MUST stay LF on every platform.
+# This repository uses core.autocrlf=true, which would otherwise rewrite these files to CRLF on
+# checkout and break the byte-stability comparisons. Pin the fixture Markdown/CSV/JSON to LF.
+SAM.Analytical.Benchmark.Compare.Tests/Fixtures/** text eol=lf
+SAM.Analytical.Benchmark.Tests/Fixtures/** text eol=lf
