@@ -41,6 +41,7 @@ namespace SAM.Analytical.Benchmark.Compare
                 writer.WriteStartObject();
                 writer.WriteString("summarySchemaVersion", SummarySchemaVersion);
                 writer.WriteString("toleranceProfile", result.ToleranceProfileName);
+                WriteToleranceProfile(writer, result.ToleranceProfile);
                 writer.WriteString("gate", Format.Gate(result.Gate));
 
                 writer.WriteStartObject("counts");
@@ -152,10 +153,33 @@ namespace SAM.Analytical.Benchmark.Compare
             writer.WriteNumber("sumOfSpaces", reconciliation.SumOfSpaces);
             writer.WriteNumber("contributingSpaces", reconciliation.ContributingSpaces);
             writer.WriteNumber("spacesMissingValue", reconciliation.SpacesMissingValue);
+            writer.WriteNumber("excludedSpaces", reconciliation.ExcludedSpaces);
+            writer.WriteBoolean("complete", reconciliation.Complete);
             WriteNumberOrNull(writer, "absoluteDifference", reconciliation.AbsoluteDifference);
             WriteNumberOrNull(writer, "relativeDifference", reconciliation.RelativeDifference);
             writer.WriteString("band", Format.Band(reconciliation.Band));
             WriteStringOrNull(writer, "notApplicableReason", NullIfEmpty(Format.NotApplicableReason(reconciliation.NotApplicableReason)));
+            writer.WriteEndObject();
+        }
+
+        private static void WriteToleranceProfile(Utf8JsonWriter writer, ToleranceProfile profile)
+        {
+            // TOLERANCES.md: reports must include the actual profile values, so a changed profile cannot be
+            // hidden behind an unchanged name.
+            writer.WriteStartObject("toleranceProfileDetail");
+            writer.WriteString("name", profile.Name);
+            writer.WriteNumber("warnRelative", profile.WarnRelative);
+            writer.WriteNumber("failRelative", profile.FailRelative);
+            writer.WriteNumber("hourWarnAbsolute", profile.HourWarnAbsolute);
+            writer.WriteNumber("hourFailAbsolute", profile.HourFailAbsolute);
+            writer.WriteNumber("defaultNearZeroFloor", profile.DefaultNearZeroFloor);
+            writer.WriteStartObject("nearZeroFloors");
+            foreach (System.Collections.Generic.KeyValuePair<MetricUnit, double> floor in profile.ConfiguredNearZeroFloors())
+            {
+                writer.WriteNumber(Format.Unit(floor.Key), floor.Value);
+            }
+
+            writer.WriteEndObject();
             writer.WriteEndObject();
         }
 

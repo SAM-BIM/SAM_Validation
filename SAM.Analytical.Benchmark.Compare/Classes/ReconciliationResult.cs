@@ -20,6 +20,8 @@ namespace SAM.Analytical.Benchmark.Compare
             double sumOfSpaces,
             int contributingSpaces,
             int spacesMissingValue,
+            int excludedSpaces,
+            bool complete,
             double? absoluteDifference,
             double? relativeDifference,
             ComparisonBand band,
@@ -33,6 +35,8 @@ namespace SAM.Analytical.Benchmark.Compare
             SumOfSpaces = sumOfSpaces;
             ContributingSpaces = contributingSpaces;
             SpacesMissingValue = spacesMissingValue;
+            ExcludedSpaces = excludedSpaces;
+            Complete = complete;
             AbsoluteDifference = absoluteDifference;
             RelativeDifference = relativeDifference;
             Band = band;
@@ -53,11 +57,24 @@ namespace SAM.Analytical.Benchmark.Compare
 
         public double SumOfSpaces { get; }
 
-        /// <summary>How many spaces contributed an available value to the sum.</summary>
+        /// <summary>How many uniquely-matched spaces contributed an available value to the sum.</summary>
         public int ContributingSpaces { get; }
 
-        /// <summary>How many spaces lacked an available value and were skipped.</summary>
+        /// <summary>How many uniquely-matched spaces lacked an available value and were skipped.</summary>
         public int SpacesMissingValue { get; }
+
+        /// <summary>
+        /// How many of this engine's spaces were excluded from the sum because they were not uniquely
+        /// matched across both documents (one-sided, duplicated or ambiguous).
+        /// </summary>
+        public int ExcludedSpaces { get; }
+
+        /// <summary>
+        /// True only when the reconciliation is complete: the model total is available, every one of this
+        /// engine's spaces was uniquely matched, and every matched space contributed a value. Missing or
+        /// unmatched spaces make a reconciliation incomplete even when the numbers happen to agree.
+        /// </summary>
+        public bool Complete { get; }
 
         public double? AbsoluteDifference { get; }
 

@@ -57,14 +57,34 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
         }
 
         [TestMethod]
-        public void NearZeroValuesStayInMatchViaFloor()
+        public void NearZeroFloorBoundsTheDenominatorWithoutMaskingDisagreement()
         {
-            // Watt floor is 10: two tiny readings 2 W and 8 W differ by 6 W, below the floor, so they match
-            // instead of exploding into a 300% relative difference.
-            MetricComparison metric = Band(Builders.Value(2, MetricUnit.Watt), Builders.Value(8, MetricUnit.Watt));
+            // The floor is the SCALE lower bound, not an absolute allowance. With the 10 W default floor:
+            // 0.1 vs 0.3 W is a negligible 0.2 W difference -> 0.2/10 = 2% -> Match (the floor tames what
+            // would otherwise be a 200% relative difference)...
+            MetricComparison negligible = Band(Builders.Value(0.1, MetricUnit.Watt), Builders.Value(0.3, MetricUnit.Watt));
+            Assert.AreEqual(ComparisonBand.Match, negligible.Band);
 
-            Assert.AreEqual(ComparisonBand.Match, metric.Band);
-            Assert.AreEqual(6d, metric.AbsoluteDifference);
+            // ...but 0 W vs 8 W is 8/10 = 80% and must NOT be masked into a match by the floor.
+            MetricComparison disagreement = Band(Builders.Value(0, MetricUnit.Watt), Builders.Value(8, MetricUnit.Watt));
+            Assert.AreEqual(ComparisonBand.Fail, disagreement.Band);
+        }
+
+        [DataTestMethod]
+        [DataRow(0d, 0d, ComparisonBand.Match)]
+        [DataRow(0d, 4d, ComparisonBand.Match)]
+        [DataRow(0d, 10d, ComparisonBand.Warn)]
+        [DataRow(0d, 20d, ComparisonBand.Fail)]
+        public void NearZeroRuleMatchesToleranceContractExamples(double tas, double openStudio, ComparisonBand expected)
+        {
+            // Reproduces the TOLERANCES.md near-zero table for a hypothetical 100 W floor: the effective
+            // relative difference is measured against the floor, so 4/10/20 W land in Pass/Warn/Fail.
+            var floors = new Dictionary<MetricUnit, double> { [MetricUnit.Watt] = 100 };
+            var profile = new ToleranceProfile("contract-example", 0.05, 0.15, 1, 24, floors, 0);
+
+            MetricComparison metric = Query.Band("model", "metric", Builders.Value(tas, MetricUnit.Watt), Builders.Value(openStudio, MetricUnit.Watt), profile);
+
+            Assert.AreEqual(expected, metric.Band);
         }
 
         [TestMethod]

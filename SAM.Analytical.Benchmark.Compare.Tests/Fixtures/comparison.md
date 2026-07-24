@@ -1,7 +1,9 @@
 # Benchmark comparison: TAS vs OpenStudio
 
 Independent comparison of two engine-neutral benchmark documents. Tolerance bands are
-**provisional reporting buckets**, not validated thresholds.
+**provisional reporting buckets**, not validated thresholds. Peak-hour bands are
+informational and are excluded from the gate. Reconciliation is a within-document diagnostic,
+kept separate from the gate.
 
 ## Summary
 
@@ -15,6 +17,26 @@ Independent comparison of two engine-neutral benchmark documents. Tolerance band
 | Metrics not applicable | 31 |
 | TAS schema version | 1.0.0 |
 | OpenStudio schema version | 1.0.0 |
+
+## Tolerance profile
+
+Provisional reporting bands (not validated thresholds). Recorded so a changed profile is never hidden behind an unchanged name.
+
+| Setting | Value |
+| --- | --- |
+| Name | default |
+| Warn (relative) | 0.05 |
+| Fail (relative) | 0.15 |
+| Peak-hour warn (h) | 1 |
+| Peak-hour fail (h) | 24 |
+| Default near-zero floor | 0 |
+| Near-zero floor (kWh) | 1 |
+| Near-zero floor (Wh) | 1000 |
+| Near-zero floor (kW) | 0.01 |
+| Near-zero floor (W) | 10 |
+| Near-zero floor (m2) | 0.01 |
+| Near-zero floor (m3) | 0.01 |
+| Near-zero floor (h) | 0.5 |
 
 ## Provenance
 
@@ -47,14 +69,14 @@ Independent comparison of two engine-neutral benchmark documents. Tolerance band
 
 ## Model-total vs sum-of-spaces reconciliation
 
-Additive quantities only; non-additive peak loads are not reconciled.
+Additive quantities only; non-additive peak loads are not reconciled. Only uniquely-matched spaces are summed; unmatched or ambiguous spaces make a reconciliation incomplete.
 
-| Engine | Quantity | Unit | Model total | Sum of spaces | Abs diff | Band | Spaces (used/missing) |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| TAS | floorArea | m2 | 240 | 252 | 12 | Match | 3/0 |
-| TAS | volume | m3 | 720 | 756 | 36 | Match | 3/0 |
-| OpenStudio | floorArea | m2 | 240 | 262 | 22 | Warn | 3/0 |
-| OpenStudio | volume | m3 | 720 | 786 | 66 | Warn | 3/0 |
+| Engine | Quantity | Unit | Model total | Sum of spaces | Abs diff | Band | Used/Missing/Excluded | Complete |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| TAS | floorArea | m2 | 240 | 240 | 0 | Match | 2/0/1 | no |
+| TAS | volume | m3 | 720 | 720 | 0 | Match | 2/0/1 | no |
+| OpenStudio | floorArea | m2 | 240 | 244 | 4 | Match | 2/0/1 | no |
+| OpenStudio | volume | m3 | 720 | 732 | 12 | Match | 2/0/1 | no |
 
 ## Space alignment
 

@@ -109,6 +109,17 @@ namespace SAM.Analytical.Benchmark.Compare
             return nearZeroFloors.TryGetValue(unit, out double floor) ? floor : DefaultNearZeroFloor;
         }
 
+        /// <summary>
+        /// The explicitly-configured per-unit near-zero floors, in ascending unit order, so reports can
+        /// record the exact profile values (TOLERANCES.md requires the actual values, not just the name).
+        /// </summary>
+        public IReadOnlyList<KeyValuePair<MetricUnit, double>> ConfiguredNearZeroFloors()
+        {
+            var floors = new List<KeyValuePair<MetricUnit, double>>(nearZeroFloors);
+            floors.Sort((left, right) => ((int)left.Key).CompareTo((int)right.Key));
+            return floors;
+        }
+
         /// <summary>Resolves a profile by (case-insensitive) name. Currently only <c>default</c> exists.</summary>
         public static ToleranceProfile Resolve(string? name)
         {

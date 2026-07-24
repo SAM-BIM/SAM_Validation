@@ -25,7 +25,9 @@ namespace SAM.Analytical.Benchmark.Compare
             Line(builder, "# Benchmark comparison: TAS vs OpenStudio");
             Line(builder, string.Empty);
             Line(builder, "Independent comparison of two engine-neutral benchmark documents. Tolerance bands are");
-            Line(builder, "**provisional reporting buckets**, not validated thresholds.");
+            Line(builder, "**provisional reporting buckets**, not validated thresholds. Peak-hour bands are");
+            Line(builder, "informational and are excluded from the gate. Reconciliation is a within-document diagnostic,");
+            Line(builder, "kept separate from the gate.");
             Line(builder, string.Empty);
 
             Line(builder, "## Summary");
@@ -48,6 +50,7 @@ namespace SAM.Analytical.Benchmark.Compare
                 Line(builder, string.Empty);
             }
 
+            AppendToleranceProfile(builder, result);
             AppendProvenance(builder, result);
             AppendModelMetrics(builder, result);
             AppendReconciliation(builder, result);
@@ -55,6 +58,29 @@ namespace SAM.Analytical.Benchmark.Compare
             AppendSpaceMetrics(builder, result);
 
             return builder.ToString();
+        }
+
+        private static void AppendToleranceProfile(StringBuilder builder, ComparisonResult result)
+        {
+            ToleranceProfile profile = result.ToleranceProfile;
+            Line(builder, "## Tolerance profile");
+            Line(builder, string.Empty);
+            Line(builder, "Provisional reporting bands (not validated thresholds). Recorded so a changed profile is never hidden behind an unchanged name.");
+            Line(builder, string.Empty);
+            Line(builder, "| Setting | Value |");
+            Line(builder, "| --- | --- |");
+            Line(builder, Row("Name", profile.Name));
+            Line(builder, Row("Warn (relative)", Format.Number(profile.WarnRelative)));
+            Line(builder, Row("Fail (relative)", Format.Number(profile.FailRelative)));
+            Line(builder, Row("Peak-hour warn (h)", Format.Number(profile.HourWarnAbsolute)));
+            Line(builder, Row("Peak-hour fail (h)", Format.Number(profile.HourFailAbsolute)));
+            Line(builder, Row("Default near-zero floor", Format.Number(profile.DefaultNearZeroFloor)));
+            foreach (System.Collections.Generic.KeyValuePair<MetricUnit, double> floor in profile.ConfiguredNearZeroFloors())
+            {
+                Line(builder, Row("Near-zero floor (" + Format.Unit(floor.Key) + ")", Format.Number(floor.Value)));
+            }
+
+            Line(builder, string.Empty);
         }
 
         private static void AppendProvenance(StringBuilder builder, ComparisonResult result)
@@ -96,10 +122,10 @@ namespace SAM.Analytical.Benchmark.Compare
         {
             Line(builder, "## Model-total vs sum-of-spaces reconciliation");
             Line(builder, string.Empty);
-            Line(builder, "Additive quantities only; non-additive peak loads are not reconciled.");
+            Line(builder, "Additive quantities only; non-additive peak loads are not reconciled. Only uniquely-matched spaces are summed; unmatched or ambiguous spaces make a reconciliation incomplete.");
             Line(builder, string.Empty);
-            Line(builder, "| Engine | Quantity | Unit | Model total | Sum of spaces | Abs diff | Band | Spaces (used/missing) |");
-            Line(builder, "| --- | --- | --- | --- | --- | --- | --- | --- |");
+            Line(builder, "| Engine | Quantity | Unit | Model total | Sum of spaces | Abs diff | Band | Used/Missing/Excluded | Complete |");
+            Line(builder, "| --- | --- | --- | --- | --- | --- | --- | --- | --- |");
             foreach (ReconciliationResult reconciliation in result.Reconciliations)
             {
                 Line(builder, "| " + string.Join(" | ", new[]
@@ -113,6 +139,8 @@ namespace SAM.Analytical.Benchmark.Compare
                     Format.Band(reconciliation.Band),
                     reconciliation.ContributingSpaces.ToString(System.Globalization.CultureInfo.InvariantCulture)
                         + "/" + reconciliation.SpacesMissingValue.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                        + "/" + reconciliation.ExcludedSpaces.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    reconciliation.Complete ? "yes" : "no"
                 }) + " |");
             }
 

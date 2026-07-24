@@ -15,7 +15,7 @@ namespace SAM.Analytical.Benchmark.Compare
     public sealed class ComparisonResult
     {
         public ComparisonResult(
-            string toleranceProfileName,
+            ToleranceProfile toleranceProfile,
             string? tasSchemaVersion,
             string? openStudioSchemaVersion,
             string? schemaDriftNote,
@@ -26,7 +26,7 @@ namespace SAM.Analytical.Benchmark.Compare
             SpaceMatchDiagnostics spaceDiagnostics,
             IReadOnlyList<ReconciliationResult> reconciliations)
         {
-            ToleranceProfileName = toleranceProfileName;
+            ToleranceProfile = toleranceProfile;
             TasSchemaVersion = tasSchemaVersion;
             OpenStudioSchemaVersion = openStudioSchemaVersion;
             SchemaDriftNote = schemaDriftNote;
@@ -38,7 +38,9 @@ namespace SAM.Analytical.Benchmark.Compare
             Reconciliations = reconciliations;
         }
 
-        public string ToleranceProfileName { get; }
+        public ToleranceProfile ToleranceProfile { get; }
+
+        public string ToleranceProfileName => ToleranceProfile.Name;
 
         public string? TasSchemaVersion { get; }
 

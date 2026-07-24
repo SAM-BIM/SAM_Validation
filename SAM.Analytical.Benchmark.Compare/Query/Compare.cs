@@ -46,12 +46,22 @@ namespace SAM.Analytical.Benchmark.Compare
                 (IReadOnlyList<BenchmarkSpaceResult>?)openStudio.Spaces);
             IReadOnlyList<SpaceComparison> spaces = CompareSpaces(alignment, profile);
 
+            // Reconciliation sums only uniquely-matched spaces (TOLERANCES.md); one-sided/ambiguous spaces
+            // are excluded and make the reconciliation incomplete.
+            var tasMatched = new List<BenchmarkSpaceResult>();
+            var openStudioMatched = new List<BenchmarkSpaceResult>();
+            foreach (SpacePair pair in alignment.Pairs)
+            {
+                tasMatched.Add(pair.Tas);
+                openStudioMatched.Add(pair.OpenStudio);
+            }
+
             var reconciliations = new List<ReconciliationResult>();
-            reconciliations.AddRange(Reconcile("TAS", tas, profile));
-            reconciliations.AddRange(Reconcile("OpenStudio", openStudio, profile));
+            reconciliations.AddRange(Reconcile("TAS", tas.Model, tasMatched, alignment.OnlyInTas.Count, profile));
+            reconciliations.AddRange(Reconcile("OpenStudio", openStudio.Model, openStudioMatched, alignment.OnlyInOpenStudio.Count, profile));
 
             return new ComparisonResult(
-                profile.Name,
+                profile,
                 tas.SchemaVersion,
                 openStudio.SchemaVersion,
                 schemaDriftNote,

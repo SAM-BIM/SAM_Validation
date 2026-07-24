@@ -84,6 +84,9 @@ namespace SAM.Analytical.Benchmark.Compare
 
             if (circular)
             {
+                // TOLERANCES.md: percentage bands do not apply to hour-of-year; use the profile's absolute
+                // hour thresholds against the circular difference. Peak-hour bands are reported but are
+                // informational and are excluded from the numerical gate (see GateStatus).
                 absolute = CircularHourDiff(tasValue, openStudioValue);
                 signed = null; // A circular difference has no single meaningful sign across the year boundary.
                 relative = null;
@@ -93,17 +96,17 @@ namespace SAM.Analytical.Benchmark.Compare
             }
             else
             {
+                // TOLERANCES.md difference calculation: the near-zero floor is the lower bound of the SCALE
+                // (the denominator), not an additive allowance. scale = max(|tas|, |os|, floor); the band is
+                // taken from the relative difference against that scale. This keeps a tiny denominator from
+                // exploding into an extreme percentage, WITHOUT masking a genuine near-zero disagreement
+                // (e.g. 0 vs floor is a 100% difference, not a match).
                 signed = openStudioValue - tasValue;
                 absolute = Math.Abs(signed.Value);
-                double magnitude = Math.Max(Math.Abs(tasValue), Math.Abs(openStudioValue));
-                relative = magnitude > 0 ? absolute / magnitude : (double?)(absolute == 0 ? 0 : null);
-
                 double floor = profile.NearZeroFloor(unit);
-                double warnLimit = floor + (profile.WarnRelative * magnitude);
-                double failLimit = floor + (profile.FailRelative * magnitude);
-                band = absolute <= warnLimit ? ComparisonBand.Match
-                    : absolute <= failLimit ? ComparisonBand.Warn
-                    : ComparisonBand.Fail;
+                double scale = Math.Max(Math.Max(Math.Abs(tasValue), Math.Abs(openStudioValue)), floor);
+                relative = scale > 0 ? absolute / scale : 0d;
+                band = Classify(relative.Value, profile);
             }
 
             return new MetricComparison(
@@ -121,6 +124,21 @@ namespace SAM.Analytical.Benchmark.Compare
         }
 
         /// <summary>
+        /// Maps a relative difference to a band using the profile's boundaries: below the warn boundary is
+        /// a match, at least warn but below fail warns, at least fail fails (TOLERANCES.md: Pass &lt; 5%,
+        /// 5% &lt;= Warn &lt; 15%, Fail &gt;= 15%).
+        /// </summary>
+        private static ComparisonBand Classify(double relative, ToleranceProfile profile)
+        {
+            if (relative < profile.WarnRelative)
+            {
+                return ComparisonBand.Match;
+            }
+
+            return relative < profile.FailRelative ? ComparisonBand.Warn : ComparisonBand.Fail;
+        }
+
+        /// <summary>
         /// The circular (year-boundary-wrapping) distance between two hour-of-year values in [0, 8759]:
         /// <c>min(|a-b|, 8760-|a-b|)</c>, so hour 8759 and hour 0 are one hour apart, not 8759.
         /// </summary>
@@ -131,7 +149,12 @@ namespace SAM.Analytical.Benchmark.Compare
             return Math.Min(direct, wrapped);
         }
 
-        /// <summary>The worst applicable band across the metrics maps to the overall gate status.</summary>
+        /// <summary>
+        /// The numerical gate: the worst comparable band across the metrics (Fail over Warn over Pass).
+        /// N/A metrics do not affect the ordering, and hour-of-year metrics are excluded entirely —
+        /// TOLERANCES.md states peak-hour differences are informational and cannot produce a numerical Fail
+        /// until their absolute thresholds are reviewed. Their bands are still shown in the reports.
+        /// </summary>
         public static GateStatusValue GateStatus(IEnumerable<MetricComparison> metrics)
         {
             if (metrics == null)
@@ -142,6 +165,11 @@ namespace SAM.Analytical.Benchmark.Compare
             bool anyWarn = false;
             foreach (MetricComparison metric in metrics)
             {
+                if (metric.Unit == MetricUnit.HourOfYear)
+                {
+                    continue;
+                }
+
                 if (metric.Band == ComparisonBand.Fail)
                 {
                     return GateStatusValue.Fail;

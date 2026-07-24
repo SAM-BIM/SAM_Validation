@@ -86,6 +86,37 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
         }
 
         [TestMethod]
+        public void PeakHourDisagreementIsInformationalAndDoesNotFailTheGate()
+        {
+            // Peak hours differ by 100h (a Fail-level band) but everything else matches. Per TOLERANCES.md
+            // peak-hour differences cannot produce a numerical Fail, so the gate stays Pass.
+            ComparisonResult result = Query.Compare(
+                Tas(Builders.Model(peakHeatingHour: Builders.Value(100, MetricUnit.HourOfYear)), Builders.Space(GuidA, "Office", 200, 600)),
+                OpenStudio(Builders.Model(peakHeatingHour: Builders.Value(200, MetricUnit.HourOfYear)), Builders.Space(GuidA, "Office", 200, 600)),
+                Profile);
+
+            MetricComparison peakHour = result.ModelMetrics.Single(metric => metric.Key == "peakHeatingHour");
+            Assert.AreEqual(ComparisonBand.Fail, peakHour.Band); // reported...
+            Assert.AreEqual(GateStatus.Pass, result.Gate);       // ...but excluded from the gate.
+        }
+
+        [TestMethod]
+        public void ReconciliationExcludesOneSidedSpacesAndIsMarkedIncomplete()
+        {
+            ComparisonResult result = Query.Compare(
+                Tas(Builders.Model(floorArea: Builders.Value(240, MetricUnit.SquareMetre)), Builders.Space(GuidA, "A", 200, 600), Builders.Space(GuidB, "TasOnly", 40, 120)),
+                OpenStudio(Builders.Model(floorArea: Builders.Value(240, MetricUnit.SquareMetre)), Builders.Space(GuidA, "A", 200, 600)),
+                Profile);
+
+            ReconciliationResult tasFloor = result.Reconciliations.Single(r => r.Engine == "TAS" && r.Key == "floorArea");
+            // Only the uniquely-matched space A (200) is summed; the TAS-only space B is excluded.
+            Assert.AreEqual(200d, tasFloor.SumOfSpaces);
+            Assert.AreEqual(1, tasFloor.ContributingSpaces);
+            Assert.AreEqual(1, tasFloor.ExcludedSpaces);
+            Assert.IsFalse(tasFloor.Complete);
+        }
+
+        [TestMethod]
         public void MissingSpaceProducesTasOnlyComparison()
         {
             ComparisonResult result = Query.Compare(
