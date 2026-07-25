@@ -17,11 +17,36 @@ status that also contributes to the overall gate.
 | Provenance status | Pass |
 | Reconciliation status | Warn |
 | Metrics matched | 10 |
-| Metrics warned | 5 |
-| Metrics failed | 2 |
+| Metrics warned | 4 |
+| Metrics failed | 3 |
 | Metrics not applicable | 31 |
+| Required metrics compared | 17 of 28 |
+| Required metrics unavailable | 11 |
 | TAS schema version | 1.0.0 |
 | OpenStudio schema version | 1.0.0 |
+
+## Coverage
+
+How much of the two runs was actually compared. Required metrics are the whole-model metrics plus
+the metrics of uniquely matched spaces; the metrics of one-sided, duplicated or ambiguous spaces are
+not counted here because those spaces are reported under space alignment instead. An unavailable
+metric is never a numerical failure, so it is recorded here — otherwise missing results could read as
+a clean pass.
+
+| Field | Value |
+| --- | --- |
+| Coverage status | Warn |
+| Required metrics | 28 |
+| Compared | 17 |
+| Unavailable (not compared) | 11 |
+| Unmatched spaces | 2 |
+| Ambiguous (split) space names | 0 |
+| Duplicated space identities | 0 |
+
+**Coverage is INCOMPLETE**, so this comparison must not be described as a complete result:
+
+- 11 of 28 required metrics were unavailable on at least one side (reported as N/A, never as a numerical failure).
+- 2 space(s) exist on only one side.
 
 ## Provenance compatibility
 
@@ -136,7 +161,7 @@ Additive quantities only; non-additive peak loads are not reconciled. Only uniqu
 | 0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b | Guid | volume | m3 | 120 | 132 | 12 | 9.090909090909092 | Warn |  |
 | 0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b | Guid | heating.designLoad | W |  |  |  |  | N/A | unavailable (Neither) |
 | 0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b | Guid | heating.peakLoad | W | 2100 | 2600 | 500 | 19.230769230769234 | Fail |  |
-| 0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b | Guid | heating.peakHour | hourOfYear | 205 | 240 | 35 |  | Warn | circular hour difference |
+| 0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b | Guid | heating.peakHour | hourOfYear | 205 | 240 | 35 |  | Fail | circular hour difference |
 | 0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b | Guid | heating.unmetHours | h | 0 | 0 | 0 | 0 | Match |  |
 | 0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b | Guid | cooling.designLoad | W |  |  |  |  | N/A | unavailable (Neither) |
 | 0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b | Guid | cooling.peakLoad | W |  |  |  |  | N/A | unavailable (Neither) |

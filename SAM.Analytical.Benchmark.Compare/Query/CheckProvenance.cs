@@ -46,13 +46,21 @@ namespace SAM.Analytical.Benchmark.Compare
             }
 
             // Same canonicalization rules, otherwise the canonical hashes are not comparable.
-            if (!StringsEqual(tas.CanonicalizationVersion, openStudio.CanonicalizationVersion))
+            bool sameCanonicalization = StringsEqual(tas.CanonicalizationVersion, openStudio.CanonicalizationVersion);
+            if (!sameCanonicalization)
             {
                 mismatches.Add(new ProvenanceMismatch("canonicalizationVersion", tas.CanonicalizationVersion, openStudio.CanonicalizationVersion));
             }
 
-            // Same canonical source model, source-model identity, weather and design-day basis.
-            RequireEqual(mismatches, "canonicalModelHash", tas.CanonicalModelHash, openStudio.CanonicalModelHash);
+            // Same canonical source model, source-model identity, weather and design-day basis. SCHEMA.md:
+            // a canonicalization-version mismatch does not prove different models, and hashes produced by
+            // different canonicalizers must not be compared as equivalent evidence — the version mismatch
+            // above is the reported finding, so the hash equality check is skipped in that case.
+            if (sameCanonicalization)
+            {
+                RequireEqual(mismatches, "canonicalModelHash", tas.CanonicalModelHash, openStudio.CanonicalModelHash);
+            }
+
             RequireEqual(mismatches, "sourceModelGuid", tas.SourceModelGuid, openStudio.SourceModelGuid);
             RequireEqual(mismatches, "weatherHash", tas.Weather?.Hash, openStudio.Weather?.Hash);
             RequireEqual(mismatches, "weatherIdentity", tas.Weather?.Identity, openStudio.Weather?.Identity);

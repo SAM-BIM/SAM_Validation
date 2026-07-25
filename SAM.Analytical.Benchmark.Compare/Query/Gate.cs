@@ -44,11 +44,22 @@ namespace SAM.Analytical.Benchmark.Compare
         }
 
         /// <summary>
-        /// The coverage status: whether the comparison actually compared the runs. Any unmatched, duplicated
-        /// or ambiguous ("split") space, or having no comparable metric at all, makes coverage incomplete
-        /// (Warn) so that missing data cannot be reported as a clean pass.
+        /// The coverage status: whether the comparison actually compared the runs. Coverage is incomplete
+        /// (Warn) when any space is unmatched, duplicated or ambiguous ("split"), when ANY required metric
+        /// in a comparable scope was unavailable, or when nothing was comparable at all. TOLERANCES.md
+        /// requires unavailable required metrics to be represented in coverage, because N/A metrics do not
+        /// affect the numerical status either — without this, a run missing most of its results could
+        /// present as a clean overall pass.
         /// </summary>
-        public static GateStatusValue CoverageStatus(SpaceMatchDiagnostics diagnostics, int comparableMetricCount)
+        /// <param name="diagnostics">The space-alignment diagnostics.</param>
+        /// <param name="comparableMetricCount">Required metrics that were actually compared.</param>
+        /// <param name="unavailableRequiredMetricCount">
+        /// Required metrics that could not be compared, counted over the whole-model metrics and the metrics
+        /// of uniquely matched spaces only. One-sided and ambiguous spaces are deliberately excluded: every
+        /// one of their metrics is N/A by construction, and that gap is already represented by the unmatched
+        /// space diagnostics, so counting them here would double-count the same missing data.
+        /// </param>
+        public static GateStatusValue CoverageStatus(SpaceMatchDiagnostics diagnostics, int comparableMetricCount, int unavailableRequiredMetricCount)
         {
             if (diagnostics == null)
             {
@@ -63,7 +74,11 @@ namespace SAM.Analytical.Benchmark.Compare
                 || diagnostics.DuplicateOpenStudioNames.Count > 0
                 || diagnostics.AmbiguousNameMatches.Count > 0;
 
-            return incompleteSpaces || comparableMetricCount == 0 ? GateStatusValue.Warn : GateStatusValue.Pass;
+            bool incomplete = incompleteSpaces
+                || unavailableRequiredMetricCount > 0
+                || comparableMetricCount == 0;
+
+            return incomplete ? GateStatusValue.Warn : GateStatusValue.Pass;
         }
 
         /// <summary>The provenance status: Pass when the two runs are compatible, otherwise Fail.</summary>

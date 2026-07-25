@@ -13,15 +13,39 @@ status that also contributes to the overall gate.
 | Tolerance profile | default |
 | Gate status (overall) | Fail |
 | Numerical status | Fail |
-| Coverage status | Pass |
+| Coverage status | Warn |
 | Provenance status | Fail |
 | Reconciliation status | Pass |
 | Metrics matched | 48 |
-| Metrics warned | 14 |
-| Metrics failed | 20 |
+| Metrics warned | 1 |
+| Metrics failed | 33 |
 | Metrics not applicable | 66 |
+| Required metrics compared | 82 of 148 |
+| Required metrics unavailable | 66 |
 | TAS schema version | 1.0.0 |
 | OpenStudio schema version | 1.0.0 |
+
+## Coverage
+
+How much of the two runs was actually compared. Required metrics are the whole-model metrics plus
+the metrics of uniquely matched spaces; the metrics of one-sided, duplicated or ambiguous spaces are
+not counted here because those spaces are reported under space alignment instead. An unavailable
+metric is never a numerical failure, so it is recorded here — otherwise missing results could read as
+a clean pass.
+
+| Field | Value |
+| --- | --- |
+| Coverage status | Warn |
+| Required metrics | 148 |
+| Compared | 82 |
+| Unavailable (not compared) | 66 |
+| Unmatched spaces | 0 |
+| Ambiguous (split) space names | 0 |
+| Duplicated space identities | 0 |
+
+**Coverage is INCOMPLETE**, so this comparison must not be described as a complete result:
+
+- 66 of 148 required metrics were unavailable on at least one side (reported as N/A, never as a numerical failure).
 
 ## Provenance compatibility
 
@@ -80,9 +104,9 @@ Provisional reporting bands (not validated thresholds). Recorded so a changed pr
 | consumptionHeating | kWh | 4331.961588091359 | 1751.1764825992748 | 2580.785105492084 | 59.57543835537944 | Fail |  |
 | consumptionCooling | kWh | 0 | 5.2499930426550705 | 5.2499930426550705 | 100 | Fail |  |
 | peakHeatingLoad | kW | 3.93393212890625 | 5.720615732872154 | 1.7866836039659035 | 31.23236531513824 | Fail |  |
-| peakHeatingHour | hourOfYear | 919 | 775 | 144 |  | Warn | circular hour difference |
+| peakHeatingHour | hourOfYear | 919 | 775 | 144 |  | Fail | circular hour difference |
 | peakCoolingLoad | kW | 0 | 0.0402250938503556 | 0.0402250938503556 | 100 | Fail |  |
-| peakCoolingHour | hourOfYear | 0 | 7974 | 786 |  | Warn | circular hour difference |
+| peakCoolingHour | hourOfYear | 0 | 7974 | 786 |  | Fail | circular hour difference |
 | floorArea | m2 | 167.95195245742798 | 167.95195207345205 | 3.839759301627055E-07 | 2.2862248669602975E-07 | Match |  |
 | volume | m3 | 470.1821608543396 | 470.1821620538829 | 1.1995433055744797E-06 | 2.5512309959496334E-07 | Match |  |
 
@@ -138,7 +162,7 @@ Additive quantities only; non-additive peak loads are not reconciled. Only uniqu
 | 0872cd39962f43c3b62a6e031a76c24a | Guid | volume | m3 | 57.33913699268221 | 57.33913699268221 | 0 | 0 | Match |  |
 | 0872cd39962f43c3b62a6e031a76c24a | Guid | heating.designLoad | W | 574.0481567382812 |  |  |  | N/A | unavailable (TasOnly) |
 | 0872cd39962f43c3b62a6e031a76c24a | Guid | heating.peakLoad | W | 565.50927734375 | 1185.0374713731348 | 619.5281940293848 | 52.279207113300885 | Fail |  |
-| 0872cd39962f43c3b62a6e031a76c24a | Guid | heating.peakHour | hourOfYear | 1441 | 919 | 522 |  | Warn | circular hour difference |
+| 0872cd39962f43c3b62a6e031a76c24a | Guid | heating.peakHour | hourOfYear | 1441 | 919 | 522 |  | Fail | circular hour difference |
 | 0872cd39962f43c3b62a6e031a76c24a | Guid | heating.unmetHours | h | 65 | 0 | 65 | 100 | Fail |  |
 | 0872cd39962f43c3b62a6e031a76c24a | Guid | cooling.designLoad | W | 0 |  |  |  | N/A | unavailable (TasOnly) |
 | 0872cd39962f43c3b62a6e031a76c24a | Guid | cooling.peakLoad | W |  | 15.588918884437554 |  |  | N/A | unavailable (OpenStudioOnly) |
@@ -148,7 +172,7 @@ Additive quantities only; non-additive peak loads are not reconciled. Only uniqu
 | 13a0403ab3a543608613b0ce9bf52d92 | Guid | volume | m3 | 10.396708229180378 | 10.396708229180378 | 0 | 0 | Match |  |
 | 13a0403ab3a543608613b0ce9bf52d92 | Guid | heating.designLoad | W | 199.83349609375 |  |  |  | N/A | unavailable (TasOnly) |
 | 13a0403ab3a543608613b0ce9bf52d92 | Guid | heating.peakLoad | W | 199.82528686523438 | 141.7703965184828 | 58.05489034675156 | 29.052824723782223 | Fail |  |
-| 13a0403ab3a543608613b0ce9bf52d92 | Guid | heating.peakHour | hourOfYear | 1441 | 918 | 523 |  | Warn | circular hour difference |
+| 13a0403ab3a543608613b0ce9bf52d92 | Guid | heating.peakHour | hourOfYear | 1441 | 918 | 523 |  | Fail | circular hour difference |
 | 13a0403ab3a543608613b0ce9bf52d92 | Guid | heating.unmetHours | h | 4761 | 0 | 4761 | 100 | Fail |  |
 | 13a0403ab3a543608613b0ce9bf52d92 | Guid | cooling.designLoad | W | 0 |  |  |  | N/A | unavailable (TasOnly) |
 | 13a0403ab3a543608613b0ce9bf52d92 | Guid | cooling.peakLoad | W |  | 0 |  |  | N/A | unavailable (OpenStudioOnly) |
@@ -168,7 +192,7 @@ Additive quantities only; non-additive peak loads are not reconciled. Only uniqu
 | 312fab2f1ba64756b47ccc3dcb21ac8a | Guid | volume | m3 | 6.712853537648204 | 6.712853537648204 | 0 | 0 | Match |  |
 | 312fab2f1ba64756b47ccc3dcb21ac8a | Guid | heating.designLoad | W | 69.60518646240234 |  |  |  | N/A | unavailable (TasOnly) |
 | 312fab2f1ba64756b47ccc3dcb21ac8a | Guid | heating.peakLoad | W | 52.024513244628906 | 0 | 52.024513244628906 | 100 | Fail |  |
-| 312fab2f1ba64756b47ccc3dcb21ac8a | Guid | heating.peakHour | hourOfYear | 1441 | 0 | 1441 |  | Warn | circular hour difference |
+| 312fab2f1ba64756b47ccc3dcb21ac8a | Guid | heating.peakHour | hourOfYear | 1441 | 0 | 1441 |  | Fail | circular hour difference |
 | 312fab2f1ba64756b47ccc3dcb21ac8a | Guid | heating.unmetHours | h | 0 | 0 | 0 | 0 | Match |  |
 | 312fab2f1ba64756b47ccc3dcb21ac8a | Guid | cooling.designLoad | W | 0 |  |  |  | N/A | unavailable (TasOnly) |
 | 312fab2f1ba64756b47ccc3dcb21ac8a | Guid | cooling.peakLoad | W |  | 0 |  |  | N/A | unavailable (OpenStudioOnly) |
@@ -178,7 +202,7 @@ Additive quantities only; non-additive peak loads are not reconciled. Only uniqu
 | 354b8786b4714f3c9941cec051a93361 | Guid | volume | m3 | 9.007679927026205 | 9.007679927026205 | 0 | 0 | Match |  |
 | 354b8786b4714f3c9941cec051a93361 | Guid | heating.designLoad | W | 137.82980346679688 |  |  |  | N/A | unavailable (TasOnly) |
 | 354b8786b4714f3c9941cec051a93361 | Guid | heating.peakLoad | W | 117.870849609375 | 262.9986126690514 | 145.1277630596764 | 55.18195004408647 | Fail |  |
-| 354b8786b4714f3c9941cec051a93361 | Guid | heating.peakHour | hourOfYear | 1441 | 919 | 522 |  | Warn | circular hour difference |
+| 354b8786b4714f3c9941cec051a93361 | Guid | heating.peakHour | hourOfYear | 1441 | 919 | 522 |  | Fail | circular hour difference |
 | 354b8786b4714f3c9941cec051a93361 | Guid | heating.unmetHours | h | 67 | 0 | 67 | 100 | Fail |  |
 | 354b8786b4714f3c9941cec051a93361 | Guid | cooling.designLoad | W | 0 |  |  |  | N/A | unavailable (TasOnly) |
 | 354b8786b4714f3c9941cec051a93361 | Guid | cooling.peakLoad | W |  | 0 |  |  | N/A | unavailable (OpenStudioOnly) |
@@ -198,7 +222,7 @@ Additive quantities only; non-additive peak loads are not reconciled. Only uniqu
 | 6e7ef8487b714da3b730e0f226af927e | Guid | volume | m3 | 58.340316505330264 | 58.340316505330264 | 0 | 0 | Match |  |
 | 6e7ef8487b714da3b730e0f226af927e | Guid | heating.designLoad | W | 379.9020080566406 |  |  |  | N/A | unavailable (TasOnly) |
 | 6e7ef8487b714da3b730e0f226af927e | Guid | heating.peakLoad | W | 132.86868286132812 | 255.3860902131586 | 122.51740735183049 | 47.97340655850561 | Fail |  |
-| 6e7ef8487b714da3b730e0f226af927e | Guid | heating.peakHour | hourOfYear | 1442 | 919 | 523 |  | Warn | circular hour difference |
+| 6e7ef8487b714da3b730e0f226af927e | Guid | heating.peakHour | hourOfYear | 1442 | 919 | 523 |  | Fail | circular hour difference |
 | 6e7ef8487b714da3b730e0f226af927e | Guid | heating.unmetHours | h | 0 | 0 | 0 | 0 | Match |  |
 | 6e7ef8487b714da3b730e0f226af927e | Guid | cooling.designLoad | W | 0 |  |  |  | N/A | unavailable (TasOnly) |
 | 6e7ef8487b714da3b730e0f226af927e | Guid | cooling.peakLoad | W |  | 0 |  |  | N/A | unavailable (OpenStudioOnly) |
@@ -208,7 +232,7 @@ Additive quantities only; non-additive peak loads are not reconciled. Only uniqu
 | 7ee49aac87b24671bb00ed1b291806a1 | Guid | volume | m3 | 26.966204214472434 | 26.966204214472434 | 0 | 0 | Match |  |
 | 7ee49aac87b24671bb00ed1b291806a1 | Guid | heating.designLoad | W | 366.3569641113281 |  |  |  | N/A | unavailable (TasOnly) |
 | 7ee49aac87b24671bb00ed1b291806a1 | Guid | heating.peakLoad | W | 366.33624267578125 | 190.23285633880042 | 176.10338633698083 | 48.07151622528315 | Fail |  |
-| 7ee49aac87b24671bb00ed1b291806a1 | Guid | heating.peakHour | hourOfYear | 1444 | 919 | 525 |  | Warn | circular hour difference |
+| 7ee49aac87b24671bb00ed1b291806a1 | Guid | heating.peakHour | hourOfYear | 1444 | 919 | 525 |  | Fail | circular hour difference |
 | 7ee49aac87b24671bb00ed1b291806a1 | Guid | heating.unmetHours | h | 0 | 0 | 0 | 0 | Match |  |
 | 7ee49aac87b24671bb00ed1b291806a1 | Guid | cooling.designLoad | W | 0 |  |  |  | N/A | unavailable (TasOnly) |
 | 7ee49aac87b24671bb00ed1b291806a1 | Guid | cooling.peakLoad | W |  | 0 |  |  | N/A | unavailable (OpenStudioOnly) |
@@ -218,7 +242,7 @@ Additive quantities only; non-additive peak loads are not reconciled. Only uniqu
 | 8d2d2a0234584fe4b171e5a9373f1b4d | Guid | volume | m3 | 28.16450759620351 | 28.16450759620351 | 0 | 0 | Match |  |
 | 8d2d2a0234584fe4b171e5a9373f1b4d | Guid | heating.designLoad | W | 69.23214721679688 |  |  |  | N/A | unavailable (TasOnly) |
 | 8d2d2a0234584fe4b171e5a9373f1b4d | Guid | heating.peakLoad | W | 11.025825500488281 | 39.29050142981706 | 28.26467592932878 | 71.93768188430163 | Fail |  |
-| 8d2d2a0234584fe4b171e5a9373f1b4d | Guid | heating.peakHour | hourOfYear | 1452 | 774 | 678 |  | Warn | circular hour difference |
+| 8d2d2a0234584fe4b171e5a9373f1b4d | Guid | heating.peakHour | hourOfYear | 1452 | 774 | 678 |  | Fail | circular hour difference |
 | 8d2d2a0234584fe4b171e5a9373f1b4d | Guid | heating.unmetHours | h | 0 | 0 | 0 | 0 | Match |  |
 | 8d2d2a0234584fe4b171e5a9373f1b4d | Guid | cooling.designLoad | W | 0 |  |  |  | N/A | unavailable (TasOnly) |
 | 8d2d2a0234584fe4b171e5a9373f1b4d | Guid | cooling.peakLoad | W |  | 0 |  |  | N/A | unavailable (OpenStudioOnly) |
@@ -228,7 +252,7 @@ Additive quantities only; non-additive peak loads are not reconciled. Only uniqu
 | affc43b0b5b3445f85d5cea8a7b88d4f | Guid | volume | m3 | 20.363019689898447 | 20.363019689898447 | 0 | 0 | Match |  |
 | affc43b0b5b3445f85d5cea8a7b88d4f | Guid | heating.designLoad | W | 204.9483642578125 |  |  |  | N/A | unavailable (TasOnly) |
 | affc43b0b5b3445f85d5cea8a7b88d4f | Guid | heating.peakLoad | W | 117.45973205566406 | 133.44180277588939 | 15.982070720225323 | 11.97680965616646 | Warn |  |
-| affc43b0b5b3445f85d5cea8a7b88d4f | Guid | heating.peakHour | hourOfYear | 1447 | 774 | 673 |  | Warn | circular hour difference |
+| affc43b0b5b3445f85d5cea8a7b88d4f | Guid | heating.peakHour | hourOfYear | 1447 | 774 | 673 |  | Fail | circular hour difference |
 | affc43b0b5b3445f85d5cea8a7b88d4f | Guid | heating.unmetHours | h | 0 | 0 | 0 | 0 | Match |  |
 | affc43b0b5b3445f85d5cea8a7b88d4f | Guid | cooling.designLoad | W | 0 |  |  |  | N/A | unavailable (TasOnly) |
 | affc43b0b5b3445f85d5cea8a7b88d4f | Guid | cooling.peakLoad | W |  | 0 |  |  | N/A | unavailable (OpenStudioOnly) |
@@ -238,7 +262,7 @@ Additive quantities only; non-additive peak loads are not reconciled. Only uniqu
 | c7df54b3c0064fc5a7c6e6012dbb9b8e | Guid | volume | m3 | 121.59536233412693 | 121.59536233412693 | 0 | 0 | Match |  |
 | c7df54b3c0064fc5a7c6e6012dbb9b8e | Guid | heating.designLoad | W | 1065.076171875 |  |  |  | N/A | unavailable (TasOnly) |
 | c7df54b3c0064fc5a7c6e6012dbb9b8e | Guid | heating.peakLoad | W | 1025.7105712890625 | 1789.9830426085152 | 764.2724713194527 | 42.69719059492821 | Fail |  |
-| c7df54b3c0064fc5a7c6e6012dbb9b8e | Guid | heating.peakHour | hourOfYear | 1443 | 775 | 668 |  | Warn | circular hour difference |
+| c7df54b3c0064fc5a7c6e6012dbb9b8e | Guid | heating.peakHour | hourOfYear | 1443 | 775 | 668 |  | Fail | circular hour difference |
 | c7df54b3c0064fc5a7c6e6012dbb9b8e | Guid | heating.unmetHours | h | 114 | 0 | 114 | 100 | Fail |  |
 | c7df54b3c0064fc5a7c6e6012dbb9b8e | Guid | cooling.designLoad | W | 0 |  |  |  | N/A | unavailable (TasOnly) |
 | c7df54b3c0064fc5a7c6e6012dbb9b8e | Guid | cooling.peakLoad | W |  | 0 |  |  | N/A | unavailable (OpenStudioOnly) |
@@ -248,7 +272,7 @@ Additive quantities only; non-additive peak loads are not reconciled. Only uniqu
 | d8294f2a30b445ca9f6ba83c8dcf4903 | Guid | volume | m3 | 51.52805170938531 | 51.52805170938531 | 0 | 0 | Match |  |
 | d8294f2a30b445ca9f6ba83c8dcf4903 | Guid | heating.designLoad | W | 564.768798828125 |  |  |  | N/A | unavailable (TasOnly) |
 | d8294f2a30b445ca9f6ba83c8dcf4903 | Guid | heating.peakLoad | W | 559.67822265625 | 936.5975380258114 | 376.91931536956145 | 40.243466384082474 | Fail |  |
-| d8294f2a30b445ca9f6ba83c8dcf4903 | Guid | heating.peakHour | hourOfYear | 1441 | 727 | 714 |  | Warn | circular hour difference |
+| d8294f2a30b445ca9f6ba83c8dcf4903 | Guid | heating.peakHour | hourOfYear | 1441 | 727 | 714 |  | Fail | circular hour difference |
 | d8294f2a30b445ca9f6ba83c8dcf4903 | Guid | heating.unmetHours | h | 69 | 0 | 69 | 100 | Fail |  |
 | d8294f2a30b445ca9f6ba83c8dcf4903 | Guid | cooling.designLoad | W | 0 |  |  |  | N/A | unavailable (TasOnly) |
 | d8294f2a30b445ca9f6ba83c8dcf4903 | Guid | cooling.peakLoad | W |  | 28.70645886203079 |  |  | N/A | unavailable (OpenStudioOnly) |
@@ -258,7 +282,7 @@ Additive quantities only; non-additive peak loads are not reconciled. Only uniqu
 | d94f4dbee3d24ff1bcb341e2c5c6ec6d | Guid | volume | m3 | 57.3391691981517 | 57.3391691981517 | 0 | 0 | Match |  |
 | d94f4dbee3d24ff1bcb341e2c5c6ec6d | Guid | heating.designLoad | W | 549.6607055664062 |  |  |  | N/A | unavailable (TasOnly) |
 | d94f4dbee3d24ff1bcb341e2c5c6ec6d | Guid | heating.peakLoad | W | 529.828857421875 | 989.0652526225581 | 459.2363952006831 | 46.431354653597815 | Fail |  |
-| d94f4dbee3d24ff1bcb341e2c5c6ec6d | Guid | heating.peakHour | hourOfYear | 1457 | 919 | 538 |  | Warn | circular hour difference |
+| d94f4dbee3d24ff1bcb341e2c5c6ec6d | Guid | heating.peakHour | hourOfYear | 1457 | 919 | 538 |  | Fail | circular hour difference |
 | d94f4dbee3d24ff1bcb341e2c5c6ec6d | Guid | heating.unmetHours | h | 29 | 0 | 29 | 100 | Fail |  |
 | d94f4dbee3d24ff1bcb341e2c5c6ec6d | Guid | cooling.designLoad | W | 0 |  |  |  | N/A | unavailable (TasOnly) |
 | d94f4dbee3d24ff1bcb341e2c5c6ec6d | Guid | cooling.peakLoad | W |  | 0 |  |  | N/A | unavailable (OpenStudioOnly) |

@@ -61,6 +61,8 @@ namespace SAM.Analytical.Benchmark.Compare
                 writer.WriteNumber("notApplicable", result.NotApplicableCount);
                 writer.WriteEndObject();
 
+                WriteCoverage(writer, result);
+
                 writer.WriteStartObject("schema");
                 WriteStringOrNull(writer, "tas", result.TasSchemaVersion);
                 WriteStringOrNull(writer, "openStudio", result.OpenStudioSchemaVersion);
@@ -208,6 +210,28 @@ namespace SAM.Analytical.Benchmark.Compare
             }
 
             writer.WriteEndObject();
+            writer.WriteEndObject();
+        }
+
+        private static void WriteCoverage(Utf8JsonWriter writer, ComparisonResult result)
+        {
+            // TOLERANCES.md: coverage diagnostics count unavailable required metrics and unmatched spaces
+            // separately, so a numerically passing report with poor coverage cannot be read as complete.
+            // The counts cover the whole-model metrics and uniquely matched spaces only — one-sided and
+            // ambiguous spaces are reported by spaceDiagnostics instead of being counted twice here.
+            SpaceMatchDiagnostics diagnostics = result.SpaceDiagnostics;
+            writer.WriteStartObject("coverage");
+            writer.WriteString("status", Format.Gate(result.CoverageStatus));
+            writer.WriteNumber("requiredMetricCount", result.RequiredMetricCount);
+            writer.WriteNumber("comparableMetricCount", result.ComparableMetricCount);
+            writer.WriteNumber("unavailableRequiredMetricCount", result.UnavailableRequiredMetricCount);
+            writer.WriteNumber("unmatchedSpaceCount", diagnostics.OnlyInTas.Count + diagnostics.OnlyInOpenStudio.Count);
+            writer.WriteNumber("ambiguousSpaceCount", diagnostics.AmbiguousNameMatches.Count);
+            writer.WriteNumber("duplicateSpaceIdentityCount",
+                diagnostics.DuplicateTasGuids.Count
+                + diagnostics.DuplicateOpenStudioGuids.Count
+                + diagnostics.DuplicateTasNames.Count
+                + diagnostics.DuplicateOpenStudioNames.Count);
             writer.WriteEndObject();
         }
 

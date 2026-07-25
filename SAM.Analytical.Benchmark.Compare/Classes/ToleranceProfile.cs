@@ -12,10 +12,12 @@ namespace SAM.Analytical.Benchmark.Compare
     /// </summary>
     /// <remarks>
     /// <para>
-    /// A metric's absolute difference <c>|a-b|</c> is compared against a combined, cliff-free limit
-    /// <c>floor(unit) + relative * max(|a|,|b|)</c>: the per-unit <see cref="NearZeroFloor"/> keeps the
-    /// band stable when both values are near zero (avoiding an exploding relative difference), while the
-    /// relative term dominates at larger magnitudes. Hour-of-year metrics ignore the relative term and
+    /// Per TOLERANCES.md, a metric's band comes from its RELATIVE difference
+    /// <c>|a-b| / max(|a|,|b|, floor(unit))</c> compared against <see cref="WarnRelative"/> and
+    /// <see cref="FailRelative"/>. The per-unit <see cref="NearZeroFloor"/> is a lower bound on the SCALE
+    /// (the denominator), not an additive allowance: it stops a tiny denominator turning a negligible
+    /// absolute difference into an extreme percentage, while still letting a genuine near-zero
+    /// disagreement (0 versus the floor is 100%) show up. Hour-of-year metrics ignore the relative term and
     /// use the absolute <see cref="HourWarnAbsolute"/>/<see cref="HourFailAbsolute"/> limits with a
     /// circular (year-boundary-wrapping) difference instead.
     /// </para>

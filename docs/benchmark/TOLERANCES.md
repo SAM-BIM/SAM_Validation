@@ -58,6 +58,8 @@ The following are contract errors rather than `N/A` comparisons:
 
 Coverage diagnostics count unavailable required metrics and unmatched spaces separately. A numerically passing report with poor coverage must not be described as complete.
 
+Concretely, the coverage status is `Warn` when any required metric is unavailable, when any space is unmatched, duplicated or ambiguous, or when nothing was comparable at all. Required metrics are the whole-model metrics plus the metrics of uniquely matched spaces; the metrics of one-sided or ambiguous spaces are not counted again, because those spaces are already reported by the unmatched-space diagnostics. Because `N/A` cannot affect the numerical status either, this is what stops a run that produced few results from presenting as a clean overall pass.
+
 ## Peak-hour comparison
 
 Peak hours are circular over a normal 8760-hour year. For valid hours `a` and `b`:
@@ -67,7 +69,7 @@ directDifference = abs(a - b)
 circularDifference = min(directDifference, 8760 - directDifference)
 ```
 
-Thus hours `8759` and `0` differ by one hour, not 8759 hours. Percentage bands do not apply to `hourOfYear`; the tolerance profile must provide absolute warn/fail thresholds in hours. Until those thresholds are reviewed, peak-hour differences are informational and cannot produce a numerical Fail.
+Thus hours `8759` and `0` differ by one hour, not 8759 hours. Percentage bands do not apply to `hourOfYear`; the tolerance profile must provide absolute warn/fail thresholds in hours, and both thresholds are applied so a large gap is not reported identically to a small one. Until those thresholds are reviewed, peak-hour differences remain informational: `hourOfYear` metrics are excluded from the numerical status, so a reported peak-hour Fail band cannot produce a numerical Fail. The exclusion — not a suppressed band — is what keeps them informational.
 
 Leap-year or sub-hourly runs are outside v1. A producer must not force such indices into the `0..8759` contract without an explicit normalization policy and schema revision.
 

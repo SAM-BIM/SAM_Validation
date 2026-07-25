@@ -13,9 +13,9 @@ namespace SAM.Analytical.Benchmark.Compare
         /// <summary>
         /// Assigns a tolerance band to a single metric. Availability wins first: if either side is
         /// unavailable the band is <see cref="ComparisonBand.NotApplicable"/> (never a failure). Available
-        /// pairs with mismatched units are also N/A. Otherwise the absolute difference is banded against
-        /// the profile's combined near-zero-floor + relative limit; hour-of-year metrics use the circular
-        /// difference and the profile's absolute hour limits.
+        /// pairs with mismatched units are also N/A. Otherwise the relative difference against the
+        /// floor-bounded scale <c>max(|tas|,|os|,floor(unit))</c> is banded; hour-of-year metrics use the
+        /// circular difference and the profile's absolute hour limits.
         /// </summary>
         public static MetricComparison Band(string scope, string key, MetricValue? tas, MetricValue? openStudio, ToleranceProfile profile)
         {
@@ -82,15 +82,18 @@ namespace SAM.Analytical.Benchmark.Compare
 
             if (circular)
             {
-                // TOLERANCES.md: percentage bands do not apply to hour-of-year, and until the absolute hour
-                // thresholds are reviewed peak-hour differences are INFORMATIONAL and cannot produce a Fail.
-                // The band is therefore capped at Warn (match within the warn hours, otherwise warn) and is
-                // additionally excluded from the numerical gate (see NumericalStatus). The fail-hours
-                // threshold is still carried on the profile and reported, ready for a future promotion.
+                // TOLERANCES.md: percentage bands do not apply to hour-of-year, so the band comes from the
+                // profile's ABSOLUTE warn/fail hour thresholds applied to the circular difference. Both
+                // thresholds are honoured here so a 100h gap is not reported identically to a 10h gap. That
+                // peak-hour differences are INFORMATIONAL is implemented where it belongs — hour-of-year
+                // metrics are excluded from the numerical gate (see NumericalStatus) — rather than by
+                // suppressing the reporting band.
                 absolute = CircularHourDiff(tasValue, openStudioValue);
                 signed = null; // A circular difference has no single meaningful sign across the year boundary.
                 relative = null;
-                band = absolute <= profile.HourWarnAbsolute ? ComparisonBand.Match : ComparisonBand.Warn;
+                band = absolute <= profile.HourWarnAbsolute ? ComparisonBand.Match
+                    : absolute <= profile.HourFailAbsolute ? ComparisonBand.Warn
+                    : ComparisonBand.Fail;
             }
             else
             {

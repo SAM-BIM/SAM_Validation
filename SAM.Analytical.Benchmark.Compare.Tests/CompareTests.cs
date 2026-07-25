@@ -28,10 +28,11 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
         [TestMethod]
         public void IdenticalDocumentsPassTheGate()
         {
+            // Complete spaces: an overall Pass requires complete metric coverage as well as matching numbers.
             BenchmarkModelResult model = Builders.Model();
             ComparisonResult result = Query.Compare(
-                Tas(model, Builders.Space(GuidA, "Office", 200, 600)),
-                OpenStudio(Builders.Model(), Builders.Space(GuidA, "Office", 200, 600)),
+                Tas(model, Builders.CompleteSpace(GuidA, "Office", 200, 600)),
+                OpenStudio(Builders.Model(), Builders.CompleteSpace(GuidA, "Office", 200, 600)),
                 Profile);
 
             Assert.AreEqual(GateStatus.Pass, result.Gate);
@@ -42,6 +43,21 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
             Assert.AreEqual(0, result.FailCount);
             Assert.AreEqual(0, result.WarnCount);
             Assert.IsNull(result.SchemaDriftNote);
+        }
+
+        [TestMethod]
+        public void EveryMetricAvailableGivesCompleteCoverage()
+        {
+            ComparisonResult result = Query.Compare(
+                Tas(Builders.Model(), Builders.CompleteSpace(GuidA, "Office", 200, 600)),
+                OpenStudio(Builders.Model(), Builders.CompleteSpace(GuidA, "Office", 200, 600)),
+                Profile);
+
+            // 8 model metrics + 10 metrics on the single matched space, all comparable.
+            Assert.AreEqual(18, result.RequiredMetricCount);
+            Assert.AreEqual(18, result.ComparableMetricCount);
+            Assert.AreEqual(0, result.UnavailableRequiredMetricCount);
+            Assert.AreEqual(GateStatus.Pass, result.CoverageStatus);
         }
 
         [TestMethod]
@@ -59,31 +75,97 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
         [TestMethod]
         public void OnlyWarnMetricsGiveWarnGate()
         {
-            // 10 -> 11.2 kW: 12% difference => between 5% warn and 15% fail bands.
+            // 10 -> 11.2 kW: 12% difference => between 5% warn and 15% fail bands. Coverage is complete, so
+            // the Warn can only come from the numerical status.
             ComparisonResult result = Query.Compare(
-                Tas(Builders.Model(peakHeatingLoad: Builders.Value(10, MetricUnit.Kilowatt)), Builders.Space(GuidA, "Office", 200, 600)),
-                OpenStudio(Builders.Model(peakHeatingLoad: Builders.Value(11.2, MetricUnit.Kilowatt)), Builders.Space(GuidA, "Office", 200, 600)),
+                Tas(Builders.Model(peakHeatingLoad: Builders.Value(10, MetricUnit.Kilowatt)), Builders.CompleteSpace(GuidA, "Office", 200, 600)),
+                OpenStudio(Builders.Model(peakHeatingLoad: Builders.Value(11.2, MetricUnit.Kilowatt)), Builders.CompleteSpace(GuidA, "Office", 200, 600)),
                 Profile);
 
             Assert.AreEqual(GateStatus.Warn, result.Gate);
+            Assert.AreEqual(GateStatus.Warn, result.NumericalStatus);
+            Assert.AreEqual(GateStatus.Pass, result.CoverageStatus);
             Assert.AreEqual(0, result.FailCount);
         }
 
         [TestMethod]
-        public void UnavailableMetricOnOneSideIsNotApplicableAndDoesNotFailTheGate()
+        public void UnavailableModelMetricIsNotApplicableButLeavesCoverageIncomplete()
         {
             BenchmarkModelResult osModel = Builders.Model(consumptionHeating: MetricValue.Unavailable(MetricUnit.KilowattHour));
 
             ComparisonResult result = Query.Compare(
-                Tas(Builders.Model(), Builders.Space(GuidA, "Office", 200, 600)),
-                OpenStudio(osModel, Builders.Space(GuidA, "Office", 200, 600)),
+                Tas(Builders.Model(), Builders.CompleteSpace(GuidA, "Office", 200, 600)),
+                OpenStudio(osModel, Builders.CompleteSpace(GuidA, "Office", 200, 600)),
                 Profile);
 
-            // A legitimately-absent metric is N/A and cannot fail; coverage stays clean because every space
-            // aligned and other metrics were comparable.
-            Assert.AreEqual(GateStatus.Pass, result.Gate);
+            // A legitimately-absent metric is N/A and never a numerical failure...
             MetricComparison unavailable = result.ModelMetrics.Single(metric => metric.Key == "consumptionHeating");
             Assert.AreEqual(NotApplicableReason.Unavailable, unavailable.NotApplicableReason);
+            Assert.AreEqual(GateStatus.Pass, result.NumericalStatus);
+            // ...but TOLERANCES.md requires it to count against coverage, so an incomplete result cannot
+            // present as a complete Pass.
+            Assert.AreEqual(1, result.UnavailableRequiredMetricCount);
+            Assert.AreEqual(17, result.ComparableMetricCount);
+            Assert.AreEqual(GateStatus.Warn, result.CoverageStatus);
+            Assert.AreEqual(GateStatus.Warn, result.Gate);
+        }
+
+        [TestMethod]
+        public void UnavailableMetricInAMatchedSpaceLeavesCoverageIncomplete()
+        {
+            // The space aligns by GUID and every whole-model metric is comparable; only one per-space metric
+            // is missing on the OpenStudio side (the documented design-load gap on the native route).
+            BenchmarkSpaceResult openStudioSpace = Builders.CompleteSpace(GuidA, "Office", 200, 600);
+            openStudioSpace.Heating!.DesignLoad = MetricValue.Unavailable(MetricUnit.Watt);
+
+            ComparisonResult result = Query.Compare(
+                Tas(Builders.Model(), Builders.CompleteSpace(GuidA, "Office", 200, 600)),
+                OpenStudio(Builders.Model(), openStudioSpace),
+                Profile);
+
+            Assert.AreEqual(GateStatus.Pass, result.NumericalStatus);
+            Assert.AreEqual(1, result.UnavailableRequiredMetricCount);
+            Assert.AreEqual(GateStatus.Warn, result.CoverageStatus);
+            Assert.AreEqual(GateStatus.Warn, result.Gate);
+        }
+
+        [TestMethod]
+        public void NoComparableMetricsLeavesCoverageIncomplete()
+        {
+            // Both runs produced identities but no measurements at all: nothing is comparable, so the
+            // numerical status has nothing to fail on and coverage is the only thing preventing a Pass.
+            ComparisonResult result = Query.Compare(
+                Tas(Builders.EmptyModel(), Builders.EmptySpace(GuidA, "Office")),
+                OpenStudio(Builders.EmptyModel(), Builders.EmptySpace(GuidA, "Office")),
+                Profile);
+
+            Assert.AreEqual(0, result.ComparableMetricCount);
+            Assert.AreEqual(18, result.UnavailableRequiredMetricCount);
+            Assert.AreEqual(GateStatus.Pass, result.NumericalStatus);
+            Assert.AreEqual(GateStatus.Warn, result.CoverageStatus);
+            Assert.AreNotEqual(GateStatus.Pass, result.Gate);
+        }
+
+        [TestMethod]
+        public void OneSidedSpaceMetricsAreNotCountedAsUnavailableRequiredMetrics()
+        {
+            // The TAS-only space contributes 10 always-N/A metrics. They must NOT be counted as unavailable
+            // required metrics — the unmatched space is already reported by the alignment diagnostics, so
+            // counting its metrics as well would double-count the same gap. Only the genuinely missing
+            // matched-scope metric (the OpenStudio model's consumptionCooling) is counted.
+            BenchmarkModelResult osModel = Builders.Model(consumptionCooling: MetricValue.Unavailable(MetricUnit.KilowattHour));
+
+            ComparisonResult result = Query.Compare(
+                Tas(Builders.Model(), Builders.CompleteSpace(GuidA, "Shared", 200, 600), Builders.CompleteSpace(GuidB, "TasOnly", 40, 120)),
+                OpenStudio(osModel, Builders.CompleteSpace(GuidA, "Shared", 200, 600)),
+                Profile);
+
+            Assert.AreEqual(18, result.RequiredMetricCount); // 8 model + 10 matched space; the TAS-only space is excluded.
+            Assert.AreEqual(1, result.UnavailableRequiredMetricCount);
+            Assert.AreEqual(17, result.ComparableMetricCount);
+            // The one-sided space's metrics are still reported (and still counted as N/A overall).
+            Assert.AreEqual(11, result.NotApplicableCount);
+            Assert.AreEqual(GateStatus.Warn, result.CoverageStatus);
         }
 
         [TestMethod]
@@ -102,16 +184,18 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
         [TestMethod]
         public void PeakHourDisagreementIsInformationalAndDoesNotFailTheGate()
         {
-            // Peak hours differ by 100h but everything else matches. Per TOLERANCES.md peak-hour differences
-            // are informational: the band is capped at Warn and excluded from the gate, so the gate is Pass.
+            // Peak hours differ by 100h but everything else matches. The profile's absolute hour thresholds
+            // (1h warn / 24h fail) put that in the Fail band, and TOLERANCES.md keeps peak-hour differences
+            // informational by excluding hour-of-year metrics from the numerical gate — not by hiding the band.
             ComparisonResult result = Query.Compare(
-                Tas(Builders.Model(peakHeatingHour: Builders.Value(100, MetricUnit.HourOfYear)), Builders.Space(GuidA, "Office", 200, 600)),
-                OpenStudio(Builders.Model(peakHeatingHour: Builders.Value(200, MetricUnit.HourOfYear)), Builders.Space(GuidA, "Office", 200, 600)),
+                Tas(Builders.Model(peakHeatingHour: Builders.Value(100, MetricUnit.HourOfYear)), Builders.CompleteSpace(GuidA, "Office", 200, 600)),
+                OpenStudio(Builders.Model(peakHeatingHour: Builders.Value(200, MetricUnit.HourOfYear)), Builders.CompleteSpace(GuidA, "Office", 200, 600)),
                 Profile);
 
             MetricComparison peakHour = result.ModelMetrics.Single(metric => metric.Key == "peakHeatingHour");
-            Assert.AreEqual(ComparisonBand.Warn, peakHour.Band); // reported, capped at Warn...
-            Assert.AreEqual(GateStatus.Pass, result.Gate);       // ...but excluded from the gate.
+            Assert.AreEqual(ComparisonBand.Fail, peakHour.Band);       // reported honestly...
+            Assert.AreEqual(GateStatus.Pass, result.NumericalStatus);  // ...but excluded from the numerical gate...
+            Assert.AreEqual(GateStatus.Pass, result.Gate);             // ...so the overall gate stays Pass.
         }
 
         [TestMethod]
@@ -246,6 +330,37 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
             Assert.AreEqual(GateStatus.Fail, result.ProvenanceStatus);
             Assert.AreEqual(GateStatus.Fail, result.Gate);
             Assert.IsTrue(result.ProvenanceCompatibility.Mismatches.Any(m => m.Field == "weatherHash"));
+        }
+
+        [TestMethod]
+        public void DifferentCanonicalizationVersionsAreReportedWithoutComparingTheirHashes()
+        {
+            // SCHEMA.md: hashes carrying different canonicalization versions must not be compared, and a
+            // version mismatch does not prove different models. The version mismatch is the finding; the
+            // (incomparable) canonical hashes must not add a second, misleading "different model" mismatch.
+            BenchmarkDocument tas = Builders.Document(EngineKind.Tas, BenchmarkRoute.NativeTas, Builders.Model(), new[] { Builders.CompleteSpace(GuidA, "Office", 200, 600) });
+            BenchmarkDocument openStudio = Builders.Document(EngineKind.OpenStudio, BenchmarkRoute.NativeOpenStudio, Builders.Model(), new[] { Builders.CompleteSpace(GuidA, "Office", 200, 600) });
+            openStudio.Provenance!.CanonicalizationVersion = "1.1.0";
+            openStudio.Provenance.CanonicalModelHash = "sha256:4444444444444444444444444444444444444444444444444444444444444444";
+
+            ComparisonResult result = Query.Compare(tas, openStudio, Profile);
+
+            Assert.IsTrue(result.ProvenanceCompatibility.Mismatches.Any(m => m.Field == "canonicalizationVersion"));
+            Assert.IsFalse(result.ProvenanceCompatibility.Mismatches.Any(m => m.Field == "canonicalModelHash"));
+            Assert.AreEqual(GateStatus.Fail, result.ProvenanceStatus);
+        }
+
+        [TestMethod]
+        public void SameCanonicalizationVersionStillComparesTheCanonicalHashes()
+        {
+            BenchmarkDocument tas = Builders.Document(EngineKind.Tas, BenchmarkRoute.NativeTas, Builders.Model(), new[] { Builders.CompleteSpace(GuidA, "Office", 200, 600) });
+            BenchmarkDocument openStudio = Builders.Document(EngineKind.OpenStudio, BenchmarkRoute.NativeOpenStudio, Builders.Model(), new[] { Builders.CompleteSpace(GuidA, "Office", 200, 600) });
+            openStudio.Provenance!.CanonicalModelHash = "sha256:4444444444444444444444444444444444444444444444444444444444444444";
+
+            ComparisonResult result = Query.Compare(tas, openStudio, Profile);
+
+            Assert.IsTrue(result.ProvenanceCompatibility.Mismatches.Any(m => m.Field == "canonicalModelHash"));
+            Assert.AreEqual(GateStatus.Fail, result.ProvenanceStatus);
         }
 
         [TestMethod]

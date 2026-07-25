@@ -30,16 +30,22 @@ tolerance bands remain provisional reporting buckets.
 
 - **Result:** both producers exited `0` with `state = Success`; the comparator exited `0` and wrote
   all three reports. Durations: TAS ≈ 58 s, OpenStudio ≈ 21 s.
+- **Note:** the two neutral input documents are the verbatim producer outputs of that run. The three
+  comparison reports were **regenerated from those same committed inputs** after two comparator
+  corrections landed in this PR (unavailable required metrics now count towards coverage; peak-hour
+  differences now use the profile's absolute fail threshold). The simulations were not re-run, and no
+  input byte changed — only the comparator's classification of the same data.
 
 ## What the comparator got right (its acceptance evidence)
 
 | Check | Outcome |
 |---|---|
-| Space alignment | **14/14 matched by GUID**, 0 by name, none one-sided → coverage `Pass` |
+| Space alignment | **14/14 matched by GUID**, 0 by name, none one-sided, none ambiguous |
 | Geometry agreement | floor area `167.95195245742798` vs `167.95195207345205` m² → rel. diff **2.3e-7**, `Match` |
 | Reconciliation | model total vs sum of matched spaces **complete (14/0/0)** and `Match` for both engines, both quantities |
 | Circular peak hour | TAS hour `0` vs OpenStudio `7974` correctly reported as **786 h** apart (wrapped), not 7974 |
-| Unavailable ⇒ N/A | 66 metrics N/A, none contributing a failure (e.g. OpenStudio emits no per-space *design* loads — a documented route limitation, so every `heating.designLoad` is `TasOnly`) |
+| Unavailable ⇒ N/A | 66 metrics N/A, none contributing a numerical failure (e.g. OpenStudio emits no per-space *design* loads — a documented route limitation, so every `heating.designLoad` is `TasOnly`) |
+| Coverage counted honestly | only **82 of 148** required metrics were comparable, so coverage is `Warn`: perfect space alignment does not let 66 missing measurements read as a complete result |
 | Determinism | reports written LF / UTF-8 no BOM, full-precision values |
 
 The near-identical geometry is the strongest signal that the whole chain is sound: two independent
@@ -72,7 +78,7 @@ provisional fail band:
 |---|---:|---:|---:|---|
 | Annual heating (kWh) | 4331.96 | 1751.18 | **59.6 %** | Fail |
 | Peak heating load (kW) | 3.934 | 5.721 | **31.2 %** | Fail |
-| Peak heating hour | 919 | 775 | 144 h | Warn (informational) |
+| Peak heating hour | 919 | 775 | 144 h | Fail band, informational only (hour metrics are excluded from the numerical status) |
 | Annual cooling (kWh) | 0 | 5.25 | 100 % | Fail |
 | Peak cooling load (kW) | 0 | 0.040 | 100 % | Fail |
 | Floor area / volume | — | — | ~2e-7 | Match |

@@ -59,6 +59,25 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
         }
 
         [TestMethod]
+        public void ReportsRecordCoverageDiagnostics()
+        {
+            // TOLERANCES.md: unavailable required metrics must be visible in the reports, not just implied by
+            // the coverage status. The shared scenario has an unavailable model metric and one-sided spaces.
+            ComparisonResult result = Compare();
+            Assert.IsTrue(result.UnavailableRequiredMetricCount > 0);
+            Assert.AreEqual(GateStatus.Warn, result.CoverageStatus);
+
+            string summary = Modify.WriteSummaryJson(result);
+            StringAssert.Contains(summary, "\"requiredMetricCount\": " + result.RequiredMetricCount);
+            StringAssert.Contains(summary, "\"comparableMetricCount\": " + result.ComparableMetricCount);
+            StringAssert.Contains(summary, "\"unavailableRequiredMetricCount\": " + result.UnavailableRequiredMetricCount);
+
+            string markdown = Modify.WriteMarkdown(result);
+            StringAssert.Contains(markdown, "| Required metrics unavailable | " + result.UnavailableRequiredMetricCount + " |");
+            StringAssert.Contains(markdown, "**Coverage is INCOMPLETE**");
+        }
+
+        [TestMethod]
         public void GoldenReportsMatchCommittedFixturesByteForByte()
         {
             // Regenerate goldens (and the two input fixtures) when explicitly requested; otherwise assert.

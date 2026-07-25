@@ -45,6 +45,8 @@ namespace SAM.Analytical.Benchmark.Compare
             Line(builder, Row("Metrics warned", result.WarnCount.ToString(System.Globalization.CultureInfo.InvariantCulture)));
             Line(builder, Row("Metrics failed", result.FailCount.ToString(System.Globalization.CultureInfo.InvariantCulture)));
             Line(builder, Row("Metrics not applicable", result.NotApplicableCount.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+            Line(builder, Row("Required metrics compared", Count(result.ComparableMetricCount) + " of " + Count(result.RequiredMetricCount)));
+            Line(builder, Row("Required metrics unavailable", Count(result.UnavailableRequiredMetricCount)));
             Line(builder, Row("TAS schema version", result.TasSchemaVersion));
             Line(builder, Row("OpenStudio schema version", result.OpenStudioSchemaVersion));
             Line(builder, string.Empty);
@@ -55,6 +57,7 @@ namespace SAM.Analytical.Benchmark.Compare
                 Line(builder, string.Empty);
             }
 
+            AppendCoverage(builder, result);
             AppendProvenanceCompatibility(builder, result);
             AppendToleranceProfile(builder, result);
             AppendProvenance(builder, result);
@@ -64,6 +67,75 @@ namespace SAM.Analytical.Benchmark.Compare
             AppendSpaceMetrics(builder, result);
 
             return builder.ToString();
+        }
+
+        private static void AppendCoverage(StringBuilder builder, ComparisonResult result)
+        {
+            // TOLERANCES.md: unavailable required metrics and unmatched spaces are counted separately, and a
+            // numerically passing report with poor coverage must not be described as complete. Coverage is
+            // therefore reported in full, with the reasons it is incomplete spelled out.
+            SpaceMatchDiagnostics diagnostics = result.SpaceDiagnostics;
+            int unmatchedSpaces = diagnostics.OnlyInTas.Count + diagnostics.OnlyInOpenStudio.Count;
+            int duplicateIdentities = diagnostics.DuplicateTasGuids.Count
+                + diagnostics.DuplicateOpenStudioGuids.Count
+                + diagnostics.DuplicateTasNames.Count
+                + diagnostics.DuplicateOpenStudioNames.Count;
+
+            Line(builder, "## Coverage");
+            Line(builder, string.Empty);
+            Line(builder, "How much of the two runs was actually compared. Required metrics are the whole-model metrics plus");
+            Line(builder, "the metrics of uniquely matched spaces; the metrics of one-sided, duplicated or ambiguous spaces are");
+            Line(builder, "not counted here because those spaces are reported under space alignment instead. An unavailable");
+            Line(builder, "metric is never a numerical failure, so it is recorded here — otherwise missing results could read as");
+            Line(builder, "a clean pass.");
+            Line(builder, string.Empty);
+            Line(builder, "| Field | Value |");
+            Line(builder, "| --- | --- |");
+            Line(builder, Row("Coverage status", Format.Gate(result.CoverageStatus)));
+            Line(builder, Row("Required metrics", Count(result.RequiredMetricCount)));
+            Line(builder, Row("Compared", Count(result.ComparableMetricCount)));
+            Line(builder, Row("Unavailable (not compared)", Count(result.UnavailableRequiredMetricCount)));
+            Line(builder, Row("Unmatched spaces", Count(unmatchedSpaces)));
+            Line(builder, Row("Ambiguous (split) space names", Count(diagnostics.AmbiguousNameMatches.Count)));
+            Line(builder, Row("Duplicated space identities", Count(duplicateIdentities)));
+            Line(builder, string.Empty);
+
+            if (result.CoverageStatus == GateStatus.Pass)
+            {
+                Line(builder, "Coverage is complete: every space aligned uniquely and every required metric was compared.");
+                Line(builder, string.Empty);
+                return;
+            }
+
+            Line(builder, "**Coverage is INCOMPLETE**, so this comparison must not be described as a complete result:");
+            Line(builder, string.Empty);
+            if (result.ComparableMetricCount == 0)
+            {
+                Line(builder, "- no metric could be compared at all.");
+            }
+
+            if (result.UnavailableRequiredMetricCount > 0)
+            {
+                Line(builder, "- " + Count(result.UnavailableRequiredMetricCount) + " of " + Count(result.RequiredMetricCount)
+                    + " required metrics were unavailable on at least one side (reported as N/A, never as a numerical failure).");
+            }
+
+            if (unmatchedSpaces > 0)
+            {
+                Line(builder, "- " + Count(unmatchedSpaces) + " space(s) exist on only one side.");
+            }
+
+            if (diagnostics.AmbiguousNameMatches.Count > 0)
+            {
+                Line(builder, "- " + Count(diagnostics.AmbiguousNameMatches.Count) + " space name(s) were ambiguous (split) and could not be aligned.");
+            }
+
+            if (duplicateIdentities > 0)
+            {
+                Line(builder, "- " + Count(duplicateIdentities) + " space identity/identities were duplicated and could not be matched uniquely.");
+            }
+
+            Line(builder, string.Empty);
         }
 
         private static void AppendProvenanceCompatibility(StringBuilder builder, ComparisonResult result)
@@ -273,6 +345,11 @@ namespace SAM.Analytical.Benchmark.Compare
             }
 
             Line(builder, string.Empty);
+        }
+
+        private static string Count(int value)
+        {
+            return value.ToString(System.Globalization.CultureInfo.InvariantCulture);
         }
 
         private static string Row(string label, string? value)

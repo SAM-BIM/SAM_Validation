@@ -32,9 +32,18 @@
   },
   "counts": {
     "match": 10,
-    "warn": 5,
-    "fail": 2,
+    "warn": 4,
+    "fail": 3,
     "notApplicable": 31
+  },
+  "coverage": {
+    "status": "Warn",
+    "requiredMetricCount": 28,
+    "comparableMetricCount": 17,
+    "unavailableRequiredMetricCount": 11,
+    "unmatchedSpaceCount": 2,
+    "ambiguousSpaceCount": 0,
+    "duplicateSpaceIdentityCount": 0
   },
   "schema": {
     "tas": "1.0.0",
@@ -611,7 +620,7 @@
           "key": "heating.peakHour",
           "unit": "hourOfYear",
           "availability": "Both",
-          "band": "Warn",
+          "band": "Fail",
           "notApplicableReason": null,
           "circular": true,
           "tas": {

@@ -77,14 +77,37 @@ namespace SAM.Analytical.Benchmark.Compare
 
         public int NotApplicableCount => AllMetrics.Count(metric => metric.Band == ComparisonBand.NotApplicable);
 
-        /// <summary>Metrics that were actually compared (a real band was assigned), used for coverage.</summary>
-        public int ComparableMetricCount => AllMetrics.Count(metric => metric.Band != ComparisonBand.NotApplicable);
+        /// <summary>
+        /// Every metric that this comparison could reasonably have compared: the whole-model metrics plus
+        /// the metrics of uniquely matched spaces. Metrics of one-sided, duplicated or ambiguous spaces are
+        /// excluded because they are N/A by construction — their gap is already reported by the space
+        /// alignment diagnostics, so counting them here would double-count the same missing data.
+        /// </summary>
+        public IEnumerable<MetricComparison> RequiredMetrics => ModelMetrics.Concat(
+            Spaces.Where(space => space.MatchKind == SpaceMatchKind.Guid || space.MatchKind == SpaceMatchKind.Name)
+                .SelectMany(space => space.Metrics));
+
+        /// <summary>The number of required metrics (whole-model plus uniquely matched spaces).</summary>
+        public int RequiredMetricCount => RequiredMetrics.Count();
+
+        /// <summary>Required metrics that were actually compared (a real band was assigned).</summary>
+        public int ComparableMetricCount => RequiredMetrics.Count(metric => metric.Band != ComparisonBand.NotApplicable);
+
+        /// <summary>
+        /// Required metrics that could NOT be compared, i.e. the coverage gap. In practice the reason is
+        /// always an unavailable value: a unit mismatch is a contract error that <see cref="Query.Compare"/>
+        /// rejects before banding, so it cannot reach a comparison result.
+        /// </summary>
+        public int UnavailableRequiredMetricCount => RequiredMetrics.Count(metric => metric.Band == ComparisonBand.NotApplicable);
 
         /// <summary>The worst comparable metric band (hour-of-year excluded, informational).</summary>
         public GateStatus NumericalStatus => Query.NumericalStatus(AllMetrics);
 
-        /// <summary>Whether every space aligned and at least one metric was comparable (else Warn).</summary>
-        public GateStatus CoverageStatus => Query.CoverageStatus(SpaceDiagnostics, ComparableMetricCount);
+        /// <summary>
+        /// Whether every space aligned AND every required metric was actually compared (else Warn), so an
+        /// incomplete run can never present as complete.
+        /// </summary>
+        public GateStatus CoverageStatus => Query.CoverageStatus(SpaceDiagnostics, ComparableMetricCount, UnavailableRequiredMetricCount);
 
         /// <summary>Whether the two runs are compatible enough to compare (else Fail).</summary>
         public GateStatus ProvenanceStatus => Query.ProvenanceStatus(ProvenanceCompatibility);

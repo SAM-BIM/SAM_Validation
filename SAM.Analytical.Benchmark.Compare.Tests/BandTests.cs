@@ -30,7 +30,7 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
         [TestMethod]
         public void WithinWarnBandIsMatch()
         {
-            // 100 -> 104: |diff| = 4, warn limit = floor(1) + 0.05*104 = 6.2, so it stays in the match band.
+            // 100 -> 104: scale = max(100, 104, floor 1) = 104, so rel = 4/104 = 3.85% < 5% warn => match.
             MetricComparison metric = Band(Builders.Value(100, MetricUnit.KilowattHour), Builders.Value(104, MetricUnit.KilowattHour));
 
             Assert.AreEqual(ComparisonBand.Match, metric.Band);
@@ -41,7 +41,7 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
         [TestMethod]
         public void BetweenWarnAndFailIsWarn()
         {
-            // 100 -> 112: |diff| = 12, warn limit ~6.6, fail limit ~17.8.
+            // 100 -> 112: scale = 112, so rel = 12/112 = 10.7% => between the 5% warn and 15% fail bands.
             MetricComparison metric = Band(Builders.Value(100, MetricUnit.KilowattHour), Builders.Value(112, MetricUnit.KilowattHour));
 
             Assert.AreEqual(ComparisonBand.Warn, metric.Band);
@@ -50,7 +50,7 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
         [TestMethod]
         public void BeyondFailBandIsFail()
         {
-            // 100 -> 140: |diff| = 40, fail limit = 1 + 0.15*140 = 22.
+            // 100 -> 140: scale = 140, so rel = 40/140 = 28.6% >= the 15% fail band.
             MetricComparison metric = Band(Builders.Value(100, MetricUnit.KilowattHour), Builders.Value(140, MetricUnit.KilowattHour));
 
             Assert.AreEqual(ComparisonBand.Fail, metric.Band);
@@ -136,6 +136,7 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
         [TestMethod]
         public void PeakHourWithinFailWindowWarns()
         {
+            // 10h apart: beyond the profile's 1h warn threshold, within its 24h fail threshold.
             MetricComparison metric = Band(Builders.Value(100, MetricUnit.HourOfYear), Builders.Value(110, MetricUnit.HourOfYear));
 
             Assert.AreEqual(10d, metric.AbsoluteDifference);
@@ -143,13 +144,16 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
         }
 
         [TestMethod]
-        public void PeakHourBeyondWarnWindowIsCappedAtWarnNeverFail()
+        public void PeakHourBeyondFailWindowReportsTheFailBand()
         {
-            // Peak-hour differences are informational (TOLERANCES.md), so even a 100h gap is capped at Warn.
+            // TOLERANCES.md requires absolute warn/fail hour thresholds, so a 100h gap must NOT be reported
+            // identically to a 10h gap. Peak-hour differences stay informational because hour-of-year metrics
+            // are excluded from the numerical gate (Query.NumericalStatus), not by suppressing this band.
             MetricComparison metric = Band(Builders.Value(100, MetricUnit.HourOfYear), Builders.Value(200, MetricUnit.HourOfYear));
 
             Assert.AreEqual(100d, metric.AbsoluteDifference);
-            Assert.AreEqual(ComparisonBand.Warn, metric.Band);
+            Assert.AreEqual(ComparisonBand.Fail, metric.Band);
+            Assert.AreEqual(GateStatus.Pass, Query.NumericalStatus(new[] { metric }));
         }
 
         [DataTestMethod]

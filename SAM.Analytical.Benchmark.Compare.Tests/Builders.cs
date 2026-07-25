@@ -94,6 +94,83 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
             };
         }
 
+        /// <summary>
+        /// A space with EVERY v1 per-space metric available, so a comparison built from it has complete
+        /// metric coverage. <see cref="Space"/> deliberately leaves the design loads and the cooling group
+        /// unavailable (the realistic OpenStudio-native shape), which now makes coverage incomplete.
+        /// </summary>
+        internal static BenchmarkSpaceResult CompleteSpace(
+            string? guid,
+            string name,
+            double area,
+            double volume,
+            MetricValue? heatingPeakLoad = null,
+            MetricValue? heatingPeakHour = null)
+        {
+            return new BenchmarkSpaceResult
+            {
+                Guid = guid,
+                Name = name,
+                Area = Value(area, MetricUnit.SquareMetre),
+                Volume = Value(volume, MetricUnit.CubicMetre),
+                Heating = new BenchmarkConditionResult
+                {
+                    DesignLoad = Value(2400, MetricUnit.Watt),
+                    PeakLoad = heatingPeakLoad ?? Value(2000, MetricUnit.Watt),
+                    PeakHour = heatingPeakHour ?? Value(205, MetricUnit.HourOfYear),
+                    UnmetHours = Value(0, MetricUnit.Hour)
+                },
+                Cooling = new BenchmarkConditionResult
+                {
+                    DesignLoad = Value(1800, MetricUnit.Watt),
+                    PeakLoad = Value(1500, MetricUnit.Watt),
+                    PeakHour = Value(4600, MetricUnit.HourOfYear),
+                    UnmetHours = Value(0, MetricUnit.Hour)
+                }
+            };
+        }
+
+        /// <summary>A space whose every metric is unavailable, for the no-comparable-coverage case.</summary>
+        internal static BenchmarkSpaceResult EmptySpace(string? guid, string name)
+        {
+            return new BenchmarkSpaceResult
+            {
+                Guid = guid,
+                Name = name,
+                Area = Missing(MetricUnit.SquareMetre),
+                Volume = Missing(MetricUnit.CubicMetre),
+                Heating = MissingCondition(),
+                Cooling = MissingCondition()
+            };
+        }
+
+        private static BenchmarkConditionResult MissingCondition()
+        {
+            return new BenchmarkConditionResult
+            {
+                DesignLoad = Missing(MetricUnit.Watt),
+                PeakLoad = Missing(MetricUnit.Watt),
+                PeakHour = Missing(MetricUnit.HourOfYear),
+                UnmetHours = Missing(MetricUnit.Hour)
+            };
+        }
+
+        /// <summary>A model result whose every metric is unavailable, for the no-comparable-coverage case.</summary>
+        internal static BenchmarkModelResult EmptyModel()
+        {
+            return new BenchmarkModelResult
+            {
+                ConsumptionHeating = Missing(MetricUnit.KilowattHour),
+                ConsumptionCooling = Missing(MetricUnit.KilowattHour),
+                PeakHeatingLoad = Missing(MetricUnit.Kilowatt),
+                PeakHeatingHour = Missing(MetricUnit.HourOfYear),
+                PeakCoolingLoad = Missing(MetricUnit.Kilowatt),
+                PeakCoolingHour = Missing(MetricUnit.HourOfYear),
+                FloorArea = Missing(MetricUnit.SquareMetre),
+                Volume = Missing(MetricUnit.CubicMetre)
+            };
+        }
+
         internal static BenchmarkSpaceResult Space(
             string? guid,
             string name,

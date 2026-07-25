@@ -22,7 +22,7 @@
   "statuses": {
     "overall": "Fail",
     "numerical": "Fail",
-    "coverage": "Pass",
+    "coverage": "Warn",
     "provenance": "Fail",
     "reconciliation": "Pass"
   },
@@ -38,9 +38,18 @@
   },
   "counts": {
     "match": 48,
-    "warn": 14,
-    "fail": 20,
+    "warn": 1,
+    "fail": 33,
     "notApplicable": 66
+  },
+  "coverage": {
+    "status": "Warn",
+    "requiredMetricCount": 148,
+    "comparableMetricCount": 82,
+    "unavailableRequiredMetricCount": 66,
+    "unmatchedSpaceCount": 0,
+    "ambiguousSpaceCount": 0,
+    "duplicateSpaceIdentityCount": 0
   },
   "schema": {
     "tas": "1.0.0",
@@ -181,7 +190,7 @@
       "key": "peakHeatingHour",
       "unit": "hourOfYear",
       "availability": "Both",
-      "band": "Warn",
+      "band": "Fail",
       "notApplicableReason": null,
       "circular": true,
       "tas": {
@@ -225,7 +234,7 @@
       "key": "peakCoolingHour",
       "unit": "hourOfYear",
       "availability": "Both",
-      "band": "Warn",
+      "band": "Fail",
       "notApplicableReason": null,
       "circular": true,
       "tas": {
@@ -617,7 +626,7 @@
           "key": "heating.peakHour",
           "unit": "hourOfYear",
           "availability": "Both",
-          "band": "Warn",
+          "band": "Fail",
           "notApplicableReason": null,
           "circular": true,
           "tas": {
@@ -846,7 +855,7 @@
           "key": "heating.peakHour",
           "unit": "hourOfYear",
           "availability": "Both",
-          "band": "Warn",
+          "band": "Fail",
           "notApplicableReason": null,
           "circular": true,
           "tas": {
@@ -1304,7 +1313,7 @@
           "key": "heating.peakHour",
           "unit": "hourOfYear",
           "availability": "Both",
-          "band": "Warn",
+          "band": "Fail",
           "notApplicableReason": null,
           "circular": true,
           "tas": {
@@ -1533,7 +1542,7 @@
           "key": "heating.peakHour",
           "unit": "hourOfYear",
           "availability": "Both",
-          "band": "Warn",
+          "band": "Fail",
           "notApplicableReason": null,
           "circular": true,
           "tas": {
@@ -1991,7 +2000,7 @@
           "key": "heating.peakHour",
           "unit": "hourOfYear",
           "availability": "Both",
-          "band": "Warn",
+          "band": "Fail",
           "notApplicableReason": null,
           "circular": true,
           "tas": {
@@ -2220,7 +2229,7 @@
           "key": "heating.peakHour",
           "unit": "hourOfYear",
           "availability": "Both",
-          "band": "Warn",
+          "band": "Fail",
           "notApplicableReason": null,
           "circular": true,
           "tas": {
@@ -2449,7 +2458,7 @@
           "key": "heating.peakHour",
           "unit": "hourOfYear",
           "availability": "Both",
-          "band": "Warn",
+          "band": "Fail",
           "notApplicableReason": null,
           "circular": true,
           "tas": {
@@ -2678,7 +2687,7 @@
           "key": "heating.peakHour",
           "unit": "hourOfYear",
           "availability": "Both",
-          "band": "Warn",
+          "band": "Fail",
           "notApplicableReason": null,
           "circular": true,
           "tas": {
@@ -2907,7 +2916,7 @@
           "key": "heating.peakHour",
           "unit": "hourOfYear",
           "availability": "Both",
-          "band": "Warn",
+          "band": "Fail",
           "notApplicableReason": null,
           "circular": true,
           "tas": {
@@ -3136,7 +3145,7 @@
           "key": "heating.peakHour",
           "unit": "hourOfYear",
           "availability": "Both",
-          "band": "Warn",
+          "band": "Fail",
           "notApplicableReason": null,
           "circular": true,
           "tas": {
@@ -3365,7 +3374,7 @@
           "key": "heating.peakHour",
           "unit": "hourOfYear",
           "availability": "Both",
-          "band": "Warn",
+          "band": "Fail",
           "notApplicableReason": null,
           "circular": true,
           "tas": {
