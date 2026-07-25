@@ -1,0 +1,149 @@
+scope,metric,unit,availability,tasValue,openStudioValue,absoluteDifference,relativeDifference,relativePercent,signedDifference,band,note
+model,consumptionHeating,kWh,Both,4331.961588091359,1751.1764825992748,2580.785105492084,0.5957543835537944,59.57543835537944,-2580.785105492084,Fail,
+model,consumptionCooling,kWh,Both,0,5.2499930426550705,5.2499930426550705,1,100,5.2499930426550705,Fail,
+model,peakHeatingLoad,kW,Both,3.93393212890625,5.720615732872154,1.7866836039659035,0.3123236531513824,31.23236531513824,1.7866836039659035,Fail,
+model,peakHeatingHour,hourOfYear,Both,919,775,144,,,,Warn,circular hour difference
+model,peakCoolingLoad,kW,Both,0,0.0402250938503556,0.0402250938503556,1,100,0.0402250938503556,Fail,
+model,peakCoolingHour,hourOfYear,Both,0,7974,786,,,,Warn,circular hour difference
+model,floorArea,m2,Both,167.95195245742798,167.95195207345205,3.839759301627055E-07,2.2862248669602973E-09,2.2862248669602975E-07,-3.839759301627055E-07,Match,
+model,volume,m3,Both,470.1821608543396,470.1821620538829,1.1995433055744797E-06,2.5512309959496336E-09,2.5512309959496334E-07,1.1995433055744797E-06,Match,
+025eb80f65d745b799511b78ac2f82fb,area,m2,Both,6.6920779999999995,6.6920779999999995,0,0,0,0,Match,
+025eb80f65d745b799511b78ac2f82fb,volume,m3,Both,9.118059598283878,9.118059598283878,0,0,0,0,Match,
+025eb80f65d745b799511b78ac2f82fb,heating.designLoad,W,TasOnly,0,,,,,,N/A,unavailable (TasOnly)
+025eb80f65d745b799511b78ac2f82fb,heating.peakLoad,W,Neither,,,,,,,N/A,unavailable (Neither)
+025eb80f65d745b799511b78ac2f82fb,heating.peakHour,hourOfYear,Neither,,,,,,,N/A,unavailable (Neither)
+025eb80f65d745b799511b78ac2f82fb,heating.unmetHours,h,TasOnly,0,,,,,,N/A,unavailable (TasOnly)
+025eb80f65d745b799511b78ac2f82fb,cooling.designLoad,W,TasOnly,0,,,,,,N/A,unavailable (TasOnly)
+025eb80f65d745b799511b78ac2f82fb,cooling.peakLoad,W,Neither,,,,,,,N/A,unavailable (Neither)
+025eb80f65d745b799511b78ac2f82fb,cooling.peakHour,hourOfYear,Neither,,,,,,,N/A,unavailable (Neither)
+025eb80f65d745b799511b78ac2f82fb,cooling.unmetHours,h,TasOnly,0,,,,,,N/A,unavailable (TasOnly)
+0872cd39962f43c3b62a6e031a76c24a,area,m2,Both,21.280010175465385,21.280010175465385,0,0,0,0,Match,
+0872cd39962f43c3b62a6e031a76c24a,volume,m3,Both,57.33913699268221,57.33913699268221,0,0,0,0,Match,
+0872cd39962f43c3b62a6e031a76c24a,heating.designLoad,W,TasOnly,574.0481567382812,,,,,,N/A,unavailable (TasOnly)
+0872cd39962f43c3b62a6e031a76c24a,heating.peakLoad,W,Both,565.50927734375,1185.0374713731348,619.5281940293848,0.5227920711330089,52.279207113300885,619.5281940293848,Fail,
+0872cd39962f43c3b62a6e031a76c24a,heating.peakHour,hourOfYear,Both,1441,919,522,,,,Warn,circular hour difference
+0872cd39962f43c3b62a6e031a76c24a,heating.unmetHours,h,Both,65,0,65,1,100,-65,Fail,
+0872cd39962f43c3b62a6e031a76c24a,cooling.designLoad,W,TasOnly,0,,,,,,N/A,unavailable (TasOnly)
+0872cd39962f43c3b62a6e031a76c24a,cooling.peakLoad,W,OpenStudioOnly,,15.588918884437554,,,,,N/A,unavailable (OpenStudioOnly)
+0872cd39962f43c3b62a6e031a76c24a,cooling.peakHour,hourOfYear,OpenStudioOnly,,7974,,,,,N/A,unavailable (OpenStudioOnly)
+0872cd39962f43c3b62a6e031a76c24a,cooling.unmetHours,h,Both,0,0,0,0,0,0,Match,
+13a0403ab3a543608613b0ce9bf52d92,area,m2,Both,3.647967799712404,3.647967799712404,0,0,0,0,Match,
+13a0403ab3a543608613b0ce9bf52d92,volume,m3,Both,10.396708229180378,10.396708229180378,0,0,0,0,Match,
+13a0403ab3a543608613b0ce9bf52d92,heating.designLoad,W,TasOnly,199.83349609375,,,,,,N/A,unavailable (TasOnly)
+13a0403ab3a543608613b0ce9bf52d92,heating.peakLoad,W,Both,199.82528686523438,141.7703965184828,58.05489034675156,0.2905282472378222,29.052824723782223,-58.05489034675156,Fail,
+13a0403ab3a543608613b0ce9bf52d92,heating.peakHour,hourOfYear,Both,1441,918,523,,,,Warn,circular hour difference
+13a0403ab3a543608613b0ce9bf52d92,heating.unmetHours,h,Both,4761,0,4761,1,100,-4761,Fail,
+13a0403ab3a543608613b0ce9bf52d92,cooling.designLoad,W,TasOnly,0,,,,,,N/A,unavailable (TasOnly)
+13a0403ab3a543608613b0ce9bf52d92,cooling.peakLoad,W,OpenStudioOnly,,0,,,,,N/A,unavailable (OpenStudioOnly)
+13a0403ab3a543608613b0ce9bf52d92,cooling.peakHour,hourOfYear,OpenStudioOnly,,0,,,,,N/A,unavailable (OpenStudioOnly)
+13a0403ab3a543608613b0ce9bf52d92,cooling.unmetHours,h,Both,0,0,0,0,0,0,Match,
+21bdbb806b4f4e2fbad0632b19fdf14b,area,m2,Both,2.9450000000000016,2.9450000000000016,0,0,0,0,Match,
+21bdbb806b4f4e2fbad0632b19fdf14b,volume,m3,Both,5.746544632499992,5.746544632499992,0,0,0,0,Match,
+21bdbb806b4f4e2fbad0632b19fdf14b,heating.designLoad,W,TasOnly,28.741456985473633,,,,,,N/A,unavailable (TasOnly)
+21bdbb806b4f4e2fbad0632b19fdf14b,heating.peakLoad,W,OpenStudioOnly,,0,,,,,N/A,unavailable (OpenStudioOnly)
+21bdbb806b4f4e2fbad0632b19fdf14b,heating.peakHour,hourOfYear,OpenStudioOnly,,0,,,,,N/A,unavailable (OpenStudioOnly)
+21bdbb806b4f4e2fbad0632b19fdf14b,heating.unmetHours,h,Both,0,0,0,0,0,0,Match,
+21bdbb806b4f4e2fbad0632b19fdf14b,cooling.designLoad,W,TasOnly,0,,,,,,N/A,unavailable (TasOnly)
+21bdbb806b4f4e2fbad0632b19fdf14b,cooling.peakLoad,W,OpenStudioOnly,,0,,,,,N/A,unavailable (OpenStudioOnly)
+21bdbb806b4f4e2fbad0632b19fdf14b,cooling.peakHour,hourOfYear,OpenStudioOnly,,0,,,,,N/A,unavailable (OpenStudioOnly)
+21bdbb806b4f4e2fbad0632b19fdf14b,cooling.unmetHours,h,Both,0,0,0,0,0,0,Match,
+312fab2f1ba64756b47ccc3dcb21ac8a,area,m2,Both,2.355387206192353,2.355387206192353,0,0,0,0,Match,
+312fab2f1ba64756b47ccc3dcb21ac8a,volume,m3,Both,6.712853537648204,6.712853537648204,0,0,0,0,Match,
+312fab2f1ba64756b47ccc3dcb21ac8a,heating.designLoad,W,TasOnly,69.60518646240234,,,,,,N/A,unavailable (TasOnly)
+312fab2f1ba64756b47ccc3dcb21ac8a,heating.peakLoad,W,Both,52.024513244628906,0,52.024513244628906,1,100,-52.024513244628906,Fail,
+312fab2f1ba64756b47ccc3dcb21ac8a,heating.peakHour,hourOfYear,Both,1441,0,1441,,,,Warn,circular hour difference
+312fab2f1ba64756b47ccc3dcb21ac8a,heating.unmetHours,h,Both,0,0,0,0,0,0,Match,
+312fab2f1ba64756b47ccc3dcb21ac8a,cooling.designLoad,W,TasOnly,0,,,,,,N/A,unavailable (TasOnly)
+312fab2f1ba64756b47ccc3dcb21ac8a,cooling.peakLoad,W,OpenStudioOnly,,0,,,,,N/A,unavailable (OpenStudioOnly)
+312fab2f1ba64756b47ccc3dcb21ac8a,cooling.peakHour,hourOfYear,OpenStudioOnly,,0,,,,,N/A,unavailable (OpenStudioOnly)
+312fab2f1ba64756b47ccc3dcb21ac8a,cooling.unmetHours,h,Both,0,0,0,0,0,0,Match,
+354b8786b4714f3c9941cec051a93361,area,m2,Both,3.0986077487352315,3.0986077487352315,0,0,0,0,Match,
+354b8786b4714f3c9941cec051a93361,volume,m3,Both,9.007679927026205,9.007679927026205,0,0,0,0,Match,
+354b8786b4714f3c9941cec051a93361,heating.designLoad,W,TasOnly,137.82980346679688,,,,,,N/A,unavailable (TasOnly)
+354b8786b4714f3c9941cec051a93361,heating.peakLoad,W,Both,117.870849609375,262.9986126690514,145.1277630596764,0.5518195004408647,55.18195004408647,145.1277630596764,Fail,
+354b8786b4714f3c9941cec051a93361,heating.peakHour,hourOfYear,Both,1441,919,522,,,,Warn,circular hour difference
+354b8786b4714f3c9941cec051a93361,heating.unmetHours,h,Both,67,0,67,1,100,-67,Fail,
+354b8786b4714f3c9941cec051a93361,cooling.designLoad,W,TasOnly,0,,,,,,N/A,unavailable (TasOnly)
+354b8786b4714f3c9941cec051a93361,cooling.peakLoad,W,OpenStudioOnly,,0,,,,,N/A,unavailable (OpenStudioOnly)
+354b8786b4714f3c9941cec051a93361,cooling.peakHour,hourOfYear,OpenStudioOnly,,0,,,,,N/A,unavailable (OpenStudioOnly)
+354b8786b4714f3c9941cec051a93361,cooling.unmetHours,h,Both,0,0,0,0,0,0,Match,
+4377cbd6712349e68fdae8814ff9c5d9,area,m2,Both,5.03787628653,5.03787628653,0,0,0,0,Match,
+4377cbd6712349e68fdae8814ff9c5d9,volume,m3,Both,7.564547888993382,7.564547888993382,0,0,0,0,Match,
+4377cbd6712349e68fdae8814ff9c5d9,heating.designLoad,W,TasOnly,0,,,,,,N/A,unavailable (TasOnly)
+4377cbd6712349e68fdae8814ff9c5d9,heating.peakLoad,W,Neither,,,,,,,N/A,unavailable (Neither)
+4377cbd6712349e68fdae8814ff9c5d9,heating.peakHour,hourOfYear,Neither,,,,,,,N/A,unavailable (Neither)
+4377cbd6712349e68fdae8814ff9c5d9,heating.unmetHours,h,TasOnly,0,,,,,,N/A,unavailable (TasOnly)
+4377cbd6712349e68fdae8814ff9c5d9,cooling.designLoad,W,TasOnly,0,,,,,,N/A,unavailable (TasOnly)
+4377cbd6712349e68fdae8814ff9c5d9,cooling.peakLoad,W,Neither,,,,,,,N/A,unavailable (Neither)
+4377cbd6712349e68fdae8814ff9c5d9,cooling.peakHour,hourOfYear,Neither,,,,,,,N/A,unavailable (Neither)
+4377cbd6712349e68fdae8814ff9c5d9,cooling.unmetHours,h,TasOnly,0,,,,,,N/A,unavailable (TasOnly)
+6e7ef8487b714da3b730e0f226af927e,area,m2,Both,23.55004650825489,23.55004650825489,0,0,0,0,Match,
+6e7ef8487b714da3b730e0f226af927e,volume,m3,Both,58.340316505330264,58.340316505330264,0,0,0,0,Match,
+6e7ef8487b714da3b730e0f226af927e,heating.designLoad,W,TasOnly,379.9020080566406,,,,,,N/A,unavailable (TasOnly)
+6e7ef8487b714da3b730e0f226af927e,heating.peakLoad,W,Both,132.86868286132812,255.3860902131586,122.51740735183049,0.4797340655850561,47.97340655850561,122.51740735183049,Fail,
+6e7ef8487b714da3b730e0f226af927e,heating.peakHour,hourOfYear,Both,1442,919,523,,,,Warn,circular hour difference
+6e7ef8487b714da3b730e0f226af927e,heating.unmetHours,h,Both,0,0,0,0,0,0,Match,
+6e7ef8487b714da3b730e0f226af927e,cooling.designLoad,W,TasOnly,0,,,,,,N/A,unavailable (TasOnly)
+6e7ef8487b714da3b730e0f226af927e,cooling.peakLoad,W,OpenStudioOnly,,0,,,,,N/A,unavailable (OpenStudioOnly)
+6e7ef8487b714da3b730e0f226af927e,cooling.peakHour,hourOfYear,OpenStudioOnly,,0,,,,,N/A,unavailable (OpenStudioOnly)
+6e7ef8487b714da3b730e0f226af927e,cooling.unmetHours,h,Both,0,0,0,0,0,0,Match,
+7ee49aac87b24671bb00ed1b291806a1,area,m2,Both,9.409999999999991,9.409999999999991,0,0,0,0,Match,
+7ee49aac87b24671bb00ed1b291806a1,volume,m3,Both,26.966204214472434,26.966204214472434,0,0,0,0,Match,
+7ee49aac87b24671bb00ed1b291806a1,heating.designLoad,W,TasOnly,366.3569641113281,,,,,,N/A,unavailable (TasOnly)
+7ee49aac87b24671bb00ed1b291806a1,heating.peakLoad,W,Both,366.33624267578125,190.23285633880042,176.10338633698083,0.4807151622528315,48.07151622528315,-176.10338633698083,Fail,
+7ee49aac87b24671bb00ed1b291806a1,heating.peakHour,hourOfYear,Both,1444,919,525,,,,Warn,circular hour difference
+7ee49aac87b24671bb00ed1b291806a1,heating.unmetHours,h,Both,0,0,0,0,0,0,Match,
+7ee49aac87b24671bb00ed1b291806a1,cooling.designLoad,W,TasOnly,0,,,,,,N/A,unavailable (TasOnly)
+7ee49aac87b24671bb00ed1b291806a1,cooling.peakLoad,W,OpenStudioOnly,,0,,,,,N/A,unavailable (OpenStudioOnly)
+7ee49aac87b24671bb00ed1b291806a1,cooling.peakHour,hourOfYear,OpenStudioOnly,,0,,,,,N/A,unavailable (OpenStudioOnly)
+7ee49aac87b24671bb00ed1b291806a1,cooling.unmetHours,h,Both,0,0,0,0,0,0,Match,
+8d2d2a0234584fe4b171e5a9373f1b4d,area,m2,Both,4.634866891556,4.634866891556,0,0,0,0,Match,
+8d2d2a0234584fe4b171e5a9373f1b4d,volume,m3,Both,28.16450759620351,28.16450759620351,0,0,0,0,Match,
+8d2d2a0234584fe4b171e5a9373f1b4d,heating.designLoad,W,TasOnly,69.23214721679688,,,,,,N/A,unavailable (TasOnly)
+8d2d2a0234584fe4b171e5a9373f1b4d,heating.peakLoad,W,Both,11.025825500488281,39.29050142981706,28.26467592932878,0.7193768188430163,71.93768188430163,28.26467592932878,Fail,
+8d2d2a0234584fe4b171e5a9373f1b4d,heating.peakHour,hourOfYear,Both,1452,774,678,,,,Warn,circular hour difference
+8d2d2a0234584fe4b171e5a9373f1b4d,heating.unmetHours,h,Both,0,0,0,0,0,0,Match,
+8d2d2a0234584fe4b171e5a9373f1b4d,cooling.designLoad,W,TasOnly,0,,,,,,N/A,unavailable (TasOnly)
+8d2d2a0234584fe4b171e5a9373f1b4d,cooling.peakLoad,W,OpenStudioOnly,,0,,,,,N/A,unavailable (OpenStudioOnly)
+8d2d2a0234584fe4b171e5a9373f1b4d,cooling.peakHour,hourOfYear,OpenStudioOnly,,0,,,,,N/A,unavailable (OpenStudioOnly)
+8d2d2a0234584fe4b171e5a9373f1b4d,cooling.unmetHours,h,Both,0,0,0,0,0,0,Match,
+affc43b0b5b3445f85d5cea8a7b88d4f,area,m2,Both,6.955039759539971,6.955039759539971,0,0,0,0,Match,
+affc43b0b5b3445f85d5cea8a7b88d4f,volume,m3,Both,20.363019689898447,20.363019689898447,0,0,0,0,Match,
+affc43b0b5b3445f85d5cea8a7b88d4f,heating.designLoad,W,TasOnly,204.9483642578125,,,,,,N/A,unavailable (TasOnly)
+affc43b0b5b3445f85d5cea8a7b88d4f,heating.peakLoad,W,Both,117.45973205566406,133.44180277588939,15.982070720225323,0.1197680965616646,11.97680965616646,15.982070720225323,Warn,
+affc43b0b5b3445f85d5cea8a7b88d4f,heating.peakHour,hourOfYear,Both,1447,774,673,,,,Warn,circular hour difference
+affc43b0b5b3445f85d5cea8a7b88d4f,heating.unmetHours,h,Both,0,0,0,0,0,0,Match,
+affc43b0b5b3445f85d5cea8a7b88d4f,cooling.designLoad,W,TasOnly,0,,,,,,N/A,unavailable (TasOnly)
+affc43b0b5b3445f85d5cea8a7b88d4f,cooling.peakLoad,W,OpenStudioOnly,,0,,,,,N/A,unavailable (OpenStudioOnly)
+affc43b0b5b3445f85d5cea8a7b88d4f,cooling.peakHour,hourOfYear,OpenStudioOnly,,0,,,,,N/A,unavailable (OpenStudioOnly)
+affc43b0b5b3445f85d5cea8a7b88d4f,cooling.unmetHours,h,Both,0,0,0,0,0,0,Match,
+c7df54b3c0064fc5a7c6e6012dbb9b8e,area,m2,Both,38.98503142608865,38.98503142608865,0,0,0,0,Match,
+c7df54b3c0064fc5a7c6e6012dbb9b8e,volume,m3,Both,121.59536233412693,121.59536233412693,0,0,0,0,Match,
+c7df54b3c0064fc5a7c6e6012dbb9b8e,heating.designLoad,W,TasOnly,1065.076171875,,,,,,N/A,unavailable (TasOnly)
+c7df54b3c0064fc5a7c6e6012dbb9b8e,heating.peakLoad,W,Both,1025.7105712890625,1789.9830426085152,764.2724713194527,0.4269719059492821,42.69719059492821,764.2724713194527,Fail,
+c7df54b3c0064fc5a7c6e6012dbb9b8e,heating.peakHour,hourOfYear,Both,1443,775,668,,,,Warn,circular hour difference
+c7df54b3c0064fc5a7c6e6012dbb9b8e,heating.unmetHours,h,Both,114,0,114,1,100,-114,Fail,
+c7df54b3c0064fc5a7c6e6012dbb9b8e,cooling.designLoad,W,TasOnly,0,,,,,,N/A,unavailable (TasOnly)
+c7df54b3c0064fc5a7c6e6012dbb9b8e,cooling.peakLoad,W,OpenStudioOnly,,0,,,,,N/A,unavailable (OpenStudioOnly)
+c7df54b3c0064fc5a7c6e6012dbb9b8e,cooling.peakHour,hourOfYear,OpenStudioOnly,,0,,,,,N/A,unavailable (OpenStudioOnly)
+c7df54b3c0064fc5a7c6e6012dbb9b8e,cooling.unmetHours,h,Both,0,0,0,0,0,0,Match,
+d8294f2a30b445ca9f6ba83c8dcf4903,area,m2,Both,18.080018143643976,18.080018143643976,0,0,0,0,Match,
+d8294f2a30b445ca9f6ba83c8dcf4903,volume,m3,Both,51.52805170938531,51.52805170938531,0,0,0,0,Match,
+d8294f2a30b445ca9f6ba83c8dcf4903,heating.designLoad,W,TasOnly,564.768798828125,,,,,,N/A,unavailable (TasOnly)
+d8294f2a30b445ca9f6ba83c8dcf4903,heating.peakLoad,W,Both,559.67822265625,936.5975380258114,376.91931536956145,0.4024346638408247,40.243466384082474,376.91931536956145,Fail,
+d8294f2a30b445ca9f6ba83c8dcf4903,heating.peakHour,hourOfYear,Both,1441,727,714,,,,Warn,circular hour difference
+d8294f2a30b445ca9f6ba83c8dcf4903,heating.unmetHours,h,Both,69,0,69,1,100,-69,Fail,
+d8294f2a30b445ca9f6ba83c8dcf4903,cooling.designLoad,W,TasOnly,0,,,,,,N/A,unavailable (TasOnly)
+d8294f2a30b445ca9f6ba83c8dcf4903,cooling.peakLoad,W,OpenStudioOnly,,28.70645886203079,,,,,N/A,unavailable (OpenStudioOnly)
+d8294f2a30b445ca9f6ba83c8dcf4903,cooling.peakHour,hourOfYear,OpenStudioOnly,,7991,,,,,N/A,unavailable (OpenStudioOnly)
+d8294f2a30b445ca9f6ba83c8dcf4903,cooling.unmetHours,h,Both,0,0,0,0,0,0,Match,
+d94f4dbee3d24ff1bcb341e2c5c6ec6d,area,m2,Both,21.280022127733165,21.280022127733165,0,0,0,0,Match,
+d94f4dbee3d24ff1bcb341e2c5c6ec6d,volume,m3,Both,57.3391691981517,57.3391691981517,0,0,0,0,Match,
+d94f4dbee3d24ff1bcb341e2c5c6ec6d,heating.designLoad,W,TasOnly,549.6607055664062,,,,,,N/A,unavailable (TasOnly)
+d94f4dbee3d24ff1bcb341e2c5c6ec6d,heating.peakLoad,W,Both,529.828857421875,989.0652526225581,459.2363952006831,0.4643135465359781,46.431354653597815,459.2363952006831,Fail,
+d94f4dbee3d24ff1bcb341e2c5c6ec6d,heating.peakHour,hourOfYear,Both,1457,919,538,,,,Warn,circular hour difference
+d94f4dbee3d24ff1bcb341e2c5c6ec6d,heating.unmetHours,h,Both,29,0,29,1,100,-29,Fail,
+d94f4dbee3d24ff1bcb341e2c5c6ec6d,cooling.designLoad,W,TasOnly,0,,,,,,N/A,unavailable (TasOnly)
+d94f4dbee3d24ff1bcb341e2c5c6ec6d,cooling.peakLoad,W,OpenStudioOnly,,0,,,,,N/A,unavailable (OpenStudioOnly)
+d94f4dbee3d24ff1bcb341e2c5c6ec6d,cooling.peakHour,hourOfYear,OpenStudioOnly,,0,,,,,N/A,unavailable (OpenStudioOnly)
+d94f4dbee3d24ff1bcb341e2c5c6ec6d,cooling.unmetHours,h,Both,0,0,0,0,0,0,Match,

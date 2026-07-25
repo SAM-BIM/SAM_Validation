@@ -3,3 +3,6 @@
 # checkout and break the byte-stability comparisons. Pin the fixture Markdown/CSV/JSON to LF.
 SAM.Analytical.Benchmark.Compare.Tests/Fixtures/** text eol=lf
 SAM.Analytical.Benchmark.Tests/Fixtures/** text eol=lf
+
+# Recorded benchmark run artefacts are verbatim tool output (LF, UTF-8 no BOM) and must stay byte-exact.
+docs/benchmark/reports/** text eol=lf
