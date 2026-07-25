@@ -22,13 +22,27 @@ namespace SAM.Analytical.Benchmark.Compare
             "relativePercent",
             "signedDifference",
             "band",
-            "note"
+            "note",
+            // TOLERANCES.md: every report must name the tolerance profile AND carry its actual values, so a
+            // changed profile can never hide behind an unchanged name. The CSV is routinely archived or
+            // imported on its own, without its sibling Markdown/JSON, so the values are repeated per row
+            // rather than written as a preamble (which would break strict RFC-4180 parsing). With
+            // nearZeroFloor being the floor for THAT row's unit, each row is independently reproducible:
+            // scale = max(|tas|, |openStudio|, nearZeroFloor), then band from warnRelative/failRelative.
+            "toleranceProfile",
+            "warnRelative",
+            "failRelative",
+            "hourWarnAbsolute",
+            "hourFailAbsolute",
+            "nearZeroFloor",
+            "informational"
         };
 
         /// <summary>
         /// Renders the per-metric comparison table (model metrics followed by every space's metrics, in
         /// the deterministic order produced by <see cref="Query.Compare"/>) as RFC-4180 CSV with LF line
-        /// endings. Numeric fields are full-precision and unrounded.
+        /// endings. Numeric fields are full-precision and unrounded. Each row also carries the tolerance
+        /// profile that classified it, so the file remains interpretable and reproducible on its own.
         /// </summary>
         public static string WriteCsv(ComparisonResult result)
         {
@@ -42,21 +56,21 @@ namespace SAM.Analytical.Benchmark.Compare
 
             foreach (MetricComparison metric in result.ModelMetrics)
             {
-                AppendMetricRow(builder, metric);
+                AppendMetricRow(builder, metric, result.ToleranceProfile);
             }
 
             foreach (SpaceComparison space in result.Spaces)
             {
                 foreach (MetricComparison metric in space.Metrics)
                 {
-                    AppendMetricRow(builder, metric);
+                    AppendMetricRow(builder, metric, result.ToleranceProfile);
                 }
             }
 
             return builder.ToString();
         }
 
-        private static void AppendMetricRow(StringBuilder builder, MetricComparison metric)
+        private static void AppendMetricRow(StringBuilder builder, MetricComparison metric, ToleranceProfile profile)
         {
             AppendRow(builder, new[]
             {
@@ -71,7 +85,14 @@ namespace SAM.Analytical.Benchmark.Compare
                 Format.Percent(metric.RelativeDifference),
                 Format.Number(metric.SignedDifference),
                 Format.Band(metric.Band),
-                Format.MetricNote(metric)
+                Format.MetricNote(metric),
+                profile.Name,
+                Format.Number(profile.WarnRelative),
+                Format.Number(profile.FailRelative),
+                Format.Number(profile.HourWarnAbsolute),
+                Format.Number(profile.HourFailAbsolute),
+                Format.Number(profile.NearZeroFloor(metric.Unit)),
+                Query.IsInformationalForNumericalGate(metric) ? "true" : "false"
             });
         }
 

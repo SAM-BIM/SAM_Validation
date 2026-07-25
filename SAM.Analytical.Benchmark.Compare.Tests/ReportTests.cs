@@ -60,6 +60,30 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
         }
 
         [TestMethod]
+        public void CsvCarriesTheToleranceProfileAndItsValuesOnEveryRow()
+        {
+            // TOLERANCES.md: a report must name the profile AND carry its actual values. The CSV is often
+            // archived on its own, so every row must be interpretable and reproducible without the siblings.
+            ComparisonResult result = Compare();
+            string csv = Modify.WriteCsv(result);
+            string[] lines = csv.TrimEnd('\n').Split('\n');
+
+            StringAssert.EndsWith(lines[0], "toleranceProfile,warnRelative,failRelative,hourWarnAbsolute,hourFailAbsolute,nearZeroFloor,informational");
+
+            // A kWh row: the default profile's 5%/15% bands, 1h/24h hour limits and the 1 kWh floor.
+            string consumption = lines.Single(line => line.StartsWith("model,consumptionHeating,", StringComparison.Ordinal));
+            StringAssert.EndsWith(consumption, "default,0.05,0.15,1,24,1,false");
+
+            // A W row carries the same profile but ITS unit's floor (10 W), and no row may omit the profile.
+            string spacePeak = lines.First(line => line.Contains(",heating.peakLoad,W,", StringComparison.Ordinal));
+            StringAssert.EndsWith(spacePeak, "default,0.05,0.15,1,24,10,false");
+            foreach (string line in lines.Skip(1))
+            {
+                StringAssert.Contains(line, ",default,");
+            }
+        }
+
+        [TestMethod]
         public void ReportsRecordCoverageDiagnostics()
         {
             // TOLERANCES.md: unavailable required metrics must be visible in the reports, not just implied by
@@ -93,7 +117,7 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
             StringAssert.Contains(markdown, "**excluded from the numerical status**");
 
             StringAssert.Contains(Modify.WriteCsv(result), "model,peakHeatingLoad,kW,Both,10,30,20,");
-            StringAssert.Contains(Modify.WriteCsv(result), "Fail,informational (excluded from the numerical status)");
+            StringAssert.Contains(Modify.WriteCsv(result), "Fail,informational (excluded from the numerical status),default,");
 
             // Annual energy is NOT informational and must not be marked.
             MetricComparison consumption = result.ModelMetrics.Single(metric => metric.Key == "consumptionHeating");
