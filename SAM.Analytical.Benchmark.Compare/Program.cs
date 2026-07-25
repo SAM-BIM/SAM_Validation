@@ -30,6 +30,11 @@ namespace SAM.Analytical.Benchmark.Compare
 
         private static readonly string[] RequiredOptions = { "tas", "openstudio", "out" };
 
+        private static readonly HashSet<string> KnownOptions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "tas", "openstudio", "out", "tolerance-profile", "fail-on-gate"
+        };
+
         public static int Main(string[] args)
         {
             return Run(args, Console.Out, Console.Error);
@@ -53,6 +58,11 @@ namespace SAM.Analytical.Benchmark.Compare
 
         private static int Execute(BenchmarkArguments arguments, TextWriter standardOutput)
         {
+            // Reject unknown/misspelled options up front. Otherwise a typo such as `--fail-on-gtae warn`
+            // would be silently ignored and a Fail gate could still exit 0, disabling the caller's intended
+            // enforcement. An ArgumentException is mapped to the usage exit code by the shared host.
+            RejectUnknownOptions(arguments);
+
             string tasPath = BenchmarkCliPaths.ValidateInputFile(arguments.RequireOption("tas"));
             string openStudioPath = BenchmarkCliPaths.ValidateInputFile(arguments.RequireOption("openstudio"));
             string outputDirectory = arguments.RequireOption("out");
@@ -90,6 +100,17 @@ namespace SAM.Analytical.Benchmark.Compare
             }
 
             return (int)BenchmarkExitCode.Success;
+        }
+
+        private static void RejectUnknownOptions(BenchmarkArguments arguments)
+        {
+            foreach (string option in arguments.Options.Keys)
+            {
+                if (!KnownOptions.Contains(option))
+                {
+                    throw new ArgumentException($"Unknown option '--{option}'.");
+                }
+            }
         }
 
         private static bool GateTrips(GateStatus gate, FailOnGate failOnGate)

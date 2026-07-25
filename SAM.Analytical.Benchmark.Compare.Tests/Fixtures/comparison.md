@@ -1,9 +1,10 @@
 # Benchmark comparison: TAS vs OpenStudio
 
 Independent comparison of two engine-neutral benchmark documents. Tolerance bands are
-**provisional reporting buckets**, not validated thresholds. Peak-hour bands are
-informational and are excluded from the gate. Reconciliation is a within-document diagnostic,
-kept separate from the gate.
+**provisional reporting buckets**, not validated thresholds. The overall gate is the worst of
+the numerical, coverage, provenance and reconciliation statuses. Peak-hour bands are informational
+and are excluded from the numerical status; reconciliation is a separate within-document diagnostic
+status that also contributes to the overall gate.
 
 ## Summary
 
@@ -63,6 +64,12 @@ Provisional reporting bands (not validated thresholds). Recorded so a changed pr
 | SAM commit | aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa |
 
 ## Model metrics
+
+> **Caveats (apply even when values pass):** whole-model peak-load semantics differ between
+> engines — OpenStudio reports a coincident total, TAS a building-profile maximum — so peak-load
+> comparisons are informational, not equivalence claims. The primary conditioning pairing
+> (OpenStudio Ideal Loads ↔ TAS thermostats + IZAMs + TBD sizing) is a **candidate** pending
+> validation. A tolerance profile cannot remove these limitations.
 
 | Metric | Unit | TAS | OpenStudio | Abs diff | Rel % | Band | Note |
 | --- | --- | --- | --- | --- | --- | --- | --- |

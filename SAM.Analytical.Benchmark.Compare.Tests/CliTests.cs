@@ -76,6 +76,24 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
         }
 
         [TestMethod]
+        public void MisspelledOptionalFlagReturnsUsageExitCodeInsteadOfSilentlyIgnoring()
+        {
+            using var workspace = new Workspace();
+            string tas = workspace.WriteDocument("benchmark-TAS.json", ScenarioDocuments.Tas());
+            string openStudio = workspace.WriteDocument("benchmark-OpenStudio.json", ScenarioDocuments.OpenStudio());
+            string outDir = Path.Combine(workspace.Root, "report");
+
+            // A typo in an optional flag must be rejected, not silently ignored (which would disable the
+            // caller's intended gate enforcement).
+            int exit = Program.Run(
+                new[] { "--tas", tas, "--openstudio", openStudio, "--out", outDir, "--fail-on-gtae", "fail" },
+                new StringWriter(),
+                new StringWriter());
+
+            Assert.AreEqual((int)BenchmarkExitCode.InvalidUsage, exit);
+        }
+
+        [TestMethod]
         public void MissingRequiredOptionReturnsUsageExitCode()
         {
             int exit = Program.Run(new[] { "--tas", "a.json" }, new StringWriter(), new StringWriter());
