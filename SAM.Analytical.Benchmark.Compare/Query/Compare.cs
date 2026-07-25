@@ -14,12 +14,20 @@ namespace SAM.Analytical.Benchmark.Compare
         /// only the neutral schema types and never touches an engine runtime.
         /// </summary>
         /// <remarks>
-        /// The two documents must share a compatible schema major version (a malformed or major-mismatched
-        /// version throws <see cref="BenchmarkValidationException"/>, which the CLI maps to the shared
-        /// validation exit code). A minor-version difference between the two is recorded as a non-fatal
-        /// drift note. Callers that read documents through <see cref="BenchmarkSerializer"/> have already
-        /// had each document validated individually; this method re-checks compatibility so it is safe to
-        /// call on hand-built documents too.
+        /// <para>
+        /// The method validates BOTH documents itself (it does not rely on the caller having read them
+        /// through <see cref="BenchmarkSerializer"/>): a document that violates the schema — including a
+        /// wrong metric unit, a broken availability invariant, an out-of-range hour, or an incompatible
+        /// schema major version — is a contract error and throws <see cref="BenchmarkValidationException"/>,
+        /// which the CLI maps to the shared validation exit code.
+        /// </para>
+        /// <para>
+        /// Beyond per-document validity, the comparator checks that the two runs are actually comparable —
+        /// same canonical source model, weather and design-day basis, expected engine/route on each side,
+        /// and both successful (see <see cref="ProvenanceCompatibility"/>). A provenance failure prevents an
+        /// overall <see cref="GateStatus.Pass"/>. A minor schema drift (relative to this comparator or
+        /// between the two documents) is recorded as a non-fatal note; a patch-only difference is not.
+        /// </para>
         /// </remarks>
         public static ComparisonResult Compare(BenchmarkDocument tas, BenchmarkDocument openStudio, ToleranceProfile profile)
         {
@@ -38,7 +46,13 @@ namespace SAM.Analytical.Benchmark.Compare
                 throw new ArgumentNullException(nameof(profile));
             }
 
-            string? schemaDriftNote = CheckSchemaCompatibility(tas.SchemaVersion, openStudio.SchemaVersion);
+            // Contract errors (unit mismatch, availability-invariant break, out-of-range hours, malformed or
+            // major-incompatible schema version) are rejected here rather than silently normalised to N/A.
+            BenchmarkValidator.ThrowIfInvalid(tas);
+            BenchmarkValidator.ThrowIfInvalid(openStudio);
+
+            string? schemaDriftNote = CheckSchemaDrift(tas.SchemaVersion, openStudio.SchemaVersion);
+            ProvenanceCompatibility provenanceCompatibility = CheckProvenanceCompatibility(tas.Provenance, openStudio.Provenance);
 
             IReadOnlyList<MetricComparison> modelMetrics = CompareModel(tas.Model, openStudio.Model, profile);
             SpaceAlignment alignment = AlignSpaces(
@@ -65,6 +79,7 @@ namespace SAM.Analytical.Benchmark.Compare
                 tas.SchemaVersion,
                 openStudio.SchemaVersion,
                 schemaDriftNote,
+                provenanceCompatibility,
                 tas.Provenance,
                 openStudio.Provenance,
                 modelMetrics,
@@ -73,27 +88,33 @@ namespace SAM.Analytical.Benchmark.Compare
                 reconciliations);
         }
 
-        private static string? CheckSchemaCompatibility(string? tasVersion, string? openStudioVersion)
+        /// <summary>
+        /// Builds the schema-drift note. Both documents have already been validated (equal, compatible
+        /// major). A MINOR drift — either document's minor differs from this comparator's, or the two
+        /// documents' minors differ from each other — warns, because unknown additive fields may be
+        /// ignored. A patch-only difference does not warn.
+        /// </summary>
+        private static string? CheckSchemaDrift(string? tasVersion, string? openStudioVersion)
         {
-            RequireCompatibleMajor(tasVersion, "TAS");
-            RequireCompatibleMajor(openStudioVersion, "OpenStudio");
-
-            if (!string.Equals(tasVersion, openStudioVersion, StringComparison.Ordinal))
+            var notes = new List<string>();
+            if (BenchmarkSchema.GetCompatibility(tasVersion) == SchemaCompatibility.CompatibleWithMinorWarning)
             {
-                return $"The documents declare different schema versions (TAS {tasVersion}, OpenStudio {openStudioVersion}); comparing shared v1 fields.";
+                notes.Add($"The TAS document schema {tasVersion} has a newer minor than this comparator ({BenchmarkSchema.CurrentVersion}); unknown additive fields are ignored.");
             }
 
-            return null;
-        }
-
-        private static void RequireCompatibleMajor(string? version, string engine)
-        {
-            SchemaCompatibility compatibility = BenchmarkSchema.GetCompatibility(version);
-            if (compatibility == SchemaCompatibility.Malformed || compatibility == SchemaCompatibility.IncompatibleMajor)
+            if (BenchmarkSchema.GetCompatibility(openStudioVersion) == SchemaCompatibility.CompatibleWithMinorWarning)
             {
-                throw new SchemaIncompatibleException(
-                    $"The {engine} document schema version '{version}' is not compatible with comparator schema {BenchmarkSchema.CurrentVersion}.");
+                notes.Add($"The OpenStudio document schema {openStudioVersion} has a newer minor than this comparator ({BenchmarkSchema.CurrentVersion}); unknown additive fields are ignored.");
             }
+
+            if (BenchmarkSchema.TryParseVersion(tasVersion, out _, out int tasMinor, out _)
+                && BenchmarkSchema.TryParseVersion(openStudioVersion, out _, out int openStudioMinor, out _)
+                && tasMinor != openStudioMinor)
+            {
+                notes.Add($"The documents declare different schema minor versions (TAS {tasVersion}, OpenStudio {openStudioVersion}); comparing shared fields.");
+            }
+
+            return notes.Count == 0 ? null : string.Join(" ", notes);
         }
 
         private static IReadOnlyList<MetricComparison> CompareModel(BenchmarkModelResult? tas, BenchmarkModelResult? openStudio, ToleranceProfile profile)

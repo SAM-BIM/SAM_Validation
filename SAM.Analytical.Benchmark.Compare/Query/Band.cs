@@ -2,8 +2,6 @@
 // Copyright (c) 2020-2026 Michal Dengusiak & Jakub Ziolkowski and contributors
 
 using System;
-using System.Collections.Generic;
-using GateStatusValue = SAM.Analytical.Benchmark.Compare.GateStatus;
 
 namespace SAM.Analytical.Benchmark.Compare
 {
@@ -84,15 +82,15 @@ namespace SAM.Analytical.Benchmark.Compare
 
             if (circular)
             {
-                // TOLERANCES.md: percentage bands do not apply to hour-of-year; use the profile's absolute
-                // hour thresholds against the circular difference. Peak-hour bands are reported but are
-                // informational and are excluded from the numerical gate (see GateStatus).
+                // TOLERANCES.md: percentage bands do not apply to hour-of-year, and until the absolute hour
+                // thresholds are reviewed peak-hour differences are INFORMATIONAL and cannot produce a Fail.
+                // The band is therefore capped at Warn (match within the warn hours, otherwise warn) and is
+                // additionally excluded from the numerical gate (see NumericalStatus). The fail-hours
+                // threshold is still carried on the profile and reported, ready for a future promotion.
                 absolute = CircularHourDiff(tasValue, openStudioValue);
                 signed = null; // A circular difference has no single meaningful sign across the year boundary.
                 relative = null;
-                band = absolute <= profile.HourWarnAbsolute ? ComparisonBand.Match
-                    : absolute <= profile.HourFailAbsolute ? ComparisonBand.Warn
-                    : ComparisonBand.Fail;
+                band = absolute <= profile.HourWarnAbsolute ? ComparisonBand.Match : ComparisonBand.Warn;
             }
             else
             {
@@ -149,39 +147,5 @@ namespace SAM.Analytical.Benchmark.Compare
             return Math.Min(direct, wrapped);
         }
 
-        /// <summary>
-        /// The numerical gate: the worst comparable band across the metrics (Fail over Warn over Pass).
-        /// N/A metrics do not affect the ordering, and hour-of-year metrics are excluded entirely —
-        /// TOLERANCES.md states peak-hour differences are informational and cannot produce a numerical Fail
-        /// until their absolute thresholds are reviewed. Their bands are still shown in the reports.
-        /// </summary>
-        public static GateStatusValue GateStatus(IEnumerable<MetricComparison> metrics)
-        {
-            if (metrics == null)
-            {
-                throw new ArgumentNullException(nameof(metrics));
-            }
-
-            bool anyWarn = false;
-            foreach (MetricComparison metric in metrics)
-            {
-                if (metric.Unit == MetricUnit.HourOfYear)
-                {
-                    continue;
-                }
-
-                if (metric.Band == ComparisonBand.Fail)
-                {
-                    return GateStatusValue.Fail;
-                }
-
-                if (metric.Band == ComparisonBand.Warn)
-                {
-                    anyWarn = true;
-                }
-            }
-
-            return anyWarn ? GateStatusValue.Warn : GateStatusValue.Pass;
-        }
     }
 }

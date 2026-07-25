@@ -63,21 +63,12 @@ namespace SAM.Analytical.Benchmark.Compare
 
             // BenchmarkSerializer.Read validates each document individually: a missing/unparseable file is a
             // JsonException (exit 3), an individually-invalid document a BenchmarkValidationException (exit 4).
+            // Query.Compare re-validates and additionally rejects contract errors (e.g. a wrong unit), which
+            // the shared host maps to the validation exit code.
             BenchmarkDocument tas = BenchmarkSerializer.Read(tasPath);
             BenchmarkDocument openStudio = BenchmarkSerializer.Read(openStudioPath);
 
-            ComparisonResult result;
-            try
-            {
-                result = Query.Compare(tas, openStudio, profile);
-            }
-            catch (SchemaIncompatibleException exception)
-            {
-                // Mapped to the shared validation exit code, consistent with an individually-read incompatible
-                // document, rather than the generic internal-failure code the host would otherwise assign.
-                standardOutput.WriteLine("error: " + exception.Message);
-                return (int)BenchmarkExitCode.ValidationFailure;
-            }
+            ComparisonResult result = Query.Compare(tas, openStudio, profile);
 
             IReadOnlyList<string> written = Modify.WriteReports(result, outputDirectory);
             foreach (string path in written)

@@ -19,6 +19,7 @@ namespace SAM.Analytical.Benchmark.Compare
             string? tasSchemaVersion,
             string? openStudioSchemaVersion,
             string? schemaDriftNote,
+            ProvenanceCompatibility provenanceCompatibility,
             BenchmarkProvenance? tasProvenance,
             BenchmarkProvenance? openStudioProvenance,
             IReadOnlyList<MetricComparison> modelMetrics,
@@ -30,6 +31,7 @@ namespace SAM.Analytical.Benchmark.Compare
             TasSchemaVersion = tasSchemaVersion;
             OpenStudioSchemaVersion = openStudioSchemaVersion;
             SchemaDriftNote = schemaDriftNote;
+            ProvenanceCompatibility = provenanceCompatibility;
             TasProvenance = tasProvenance;
             OpenStudioProvenance = openStudioProvenance;
             ModelMetrics = modelMetrics;
@@ -46,8 +48,11 @@ namespace SAM.Analytical.Benchmark.Compare
 
         public string? OpenStudioSchemaVersion { get; }
 
-        /// <summary>A human-readable note when the two documents declare different schema versions, else null.</summary>
+        /// <summary>A human-readable note when the two documents declare different schema minor versions, else null.</summary>
         public string? SchemaDriftNote { get; }
+
+        /// <summary>Whether the two runs are actually comparable (same model, weather, design-day, engines/routes).</summary>
+        public ProvenanceCompatibility ProvenanceCompatibility { get; }
 
         public BenchmarkProvenance? TasProvenance { get; }
 
@@ -72,7 +77,25 @@ namespace SAM.Analytical.Benchmark.Compare
 
         public int NotApplicableCount => AllMetrics.Count(metric => metric.Band == ComparisonBand.NotApplicable);
 
-        /// <summary>The overall gate: the worst applicable band across every model and space metric.</summary>
-        public GateStatus Gate => Query.GateStatus(AllMetrics);
+        /// <summary>Metrics that were actually compared (a real band was assigned), used for coverage.</summary>
+        public int ComparableMetricCount => AllMetrics.Count(metric => metric.Band != ComparisonBand.NotApplicable);
+
+        /// <summary>The worst comparable metric band (hour-of-year excluded, informational).</summary>
+        public GateStatus NumericalStatus => Query.NumericalStatus(AllMetrics);
+
+        /// <summary>Whether every space aligned and at least one metric was comparable (else Warn).</summary>
+        public GateStatus CoverageStatus => Query.CoverageStatus(SpaceDiagnostics, ComparableMetricCount);
+
+        /// <summary>Whether the two runs are compatible enough to compare (else Fail).</summary>
+        public GateStatus ProvenanceStatus => Query.ProvenanceStatus(ProvenanceCompatibility);
+
+        /// <summary>Whether within-document model totals reconcile against their matched spaces (else Warn).</summary>
+        public GateStatus ReconciliationStatus => Query.ReconciliationStatus(Reconciliations);
+
+        /// <summary>
+        /// The overall gate: the worst of the numerical, coverage, provenance and reconciliation statuses, so
+        /// missing data, mismatched inputs or incomplete coverage can never present as a clean pass.
+        /// </summary>
+        public GateStatus Gate => Query.OverallGate(NumericalStatus, CoverageStatus, ProvenanceStatus, ReconciliationStatus);
     }
 }

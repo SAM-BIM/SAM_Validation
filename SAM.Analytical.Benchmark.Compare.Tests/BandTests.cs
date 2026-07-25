@@ -143,12 +143,13 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
         }
 
         [TestMethod]
-        public void PeakHourBeyondFailWindowFails()
+        public void PeakHourBeyondWarnWindowIsCappedAtWarnNeverFail()
         {
+            // Peak-hour differences are informational (TOLERANCES.md), so even a 100h gap is capped at Warn.
             MetricComparison metric = Band(Builders.Value(100, MetricUnit.HourOfYear), Builders.Value(200, MetricUnit.HourOfYear));
 
             Assert.AreEqual(100d, metric.AbsoluteDifference);
-            Assert.AreEqual(ComparisonBand.Fail, metric.Band);
+            Assert.AreEqual(ComparisonBand.Warn, metric.Band);
         }
 
         [DataTestMethod]

@@ -44,6 +44,16 @@ namespace SAM.Analytical.Benchmark.Compare
                 WriteToleranceProfile(writer, result.ToleranceProfile);
                 writer.WriteString("gate", Format.Gate(result.Gate));
 
+                writer.WriteStartObject("statuses");
+                writer.WriteString("overall", Format.Gate(result.Gate));
+                writer.WriteString("numerical", Format.Gate(result.NumericalStatus));
+                writer.WriteString("coverage", Format.Gate(result.CoverageStatus));
+                writer.WriteString("provenance", Format.Gate(result.ProvenanceStatus));
+                writer.WriteString("reconciliation", Format.Gate(result.ReconciliationStatus));
+                writer.WriteEndObject();
+
+                WriteProvenanceCompatibility(writer, result.ProvenanceCompatibility);
+
                 writer.WriteStartObject("counts");
                 writer.WriteNumber("match", result.MatchCount);
                 writer.WriteNumber("warn", result.WarnCount);
@@ -159,6 +169,24 @@ namespace SAM.Analytical.Benchmark.Compare
             WriteNumberOrNull(writer, "relativeDifference", reconciliation.RelativeDifference);
             writer.WriteString("band", Format.Band(reconciliation.Band));
             WriteStringOrNull(writer, "notApplicableReason", NullIfEmpty(Format.NotApplicableReason(reconciliation.NotApplicableReason)));
+            writer.WriteEndObject();
+        }
+
+        private static void WriteProvenanceCompatibility(Utf8JsonWriter writer, ProvenanceCompatibility compatibility)
+        {
+            writer.WriteStartObject("provenanceCompatibility");
+            writer.WriteBoolean("compatible", compatibility.IsCompatible);
+            writer.WriteStartArray("mismatches");
+            foreach (ProvenanceMismatch mismatch in compatibility.Mismatches)
+            {
+                writer.WriteStartObject();
+                writer.WriteString("field", mismatch.Field);
+                WriteStringOrNull(writer, "tas", mismatch.Tas);
+                WriteStringOrNull(writer, "openStudio", mismatch.OpenStudio);
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
             writer.WriteEndObject();
         }
 

@@ -35,6 +35,10 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
                 Profile);
 
             Assert.AreEqual(GateStatus.Pass, result.Gate);
+            Assert.AreEqual(GateStatus.Pass, result.NumericalStatus);
+            Assert.AreEqual(GateStatus.Pass, result.CoverageStatus);
+            Assert.AreEqual(GateStatus.Pass, result.ProvenanceStatus);
+            Assert.AreEqual(GateStatus.Pass, result.ReconciliationStatus);
             Assert.AreEqual(0, result.FailCount);
             Assert.AreEqual(0, result.WarnCount);
             Assert.IsNull(result.SchemaDriftNote);
@@ -66,37 +70,47 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
         }
 
         [TestMethod]
-        public void UnavailableAndUnitMismatchMetricsNeverFailTheGate()
+        public void UnavailableMetricOnOneSideIsNotApplicableAndDoesNotFailTheGate()
         {
-            BenchmarkModelResult tasModel = Builders.Model();
-            BenchmarkModelResult osModel = Builders.Model(
-                consumptionHeating: MetricValue.Unavailable(MetricUnit.KilowattHour),
-                consumptionCooling: Builders.Value(500, MetricUnit.WattHour));
+            BenchmarkModelResult osModel = Builders.Model(consumptionHeating: MetricValue.Unavailable(MetricUnit.KilowattHour));
 
             ComparisonResult result = Query.Compare(
-                Tas(tasModel, Builders.Space(GuidA, "Office", 200, 600)),
+                Tas(Builders.Model(), Builders.Space(GuidA, "Office", 200, 600)),
                 OpenStudio(osModel, Builders.Space(GuidA, "Office", 200, 600)),
                 Profile);
 
+            // A legitimately-absent metric is N/A and cannot fail; coverage stays clean because every space
+            // aligned and other metrics were comparable.
             Assert.AreEqual(GateStatus.Pass, result.Gate);
-            Assert.IsTrue(result.NotApplicableCount >= 2);
+            MetricComparison unavailable = result.ModelMetrics.Single(metric => metric.Key == "consumptionHeating");
+            Assert.AreEqual(NotApplicableReason.Unavailable, unavailable.NotApplicableReason);
+        }
 
-            MetricComparison unitMismatch = result.ModelMetrics.Single(metric => metric.Key == "consumptionCooling");
-            Assert.AreEqual(NotApplicableReason.UnitMismatch, unitMismatch.NotApplicableReason);
+        [TestMethod]
+        public void UnitMismatchIsAContractErrorRejectedByCompare()
+        {
+            // A metric carrying the wrong unit is a schema-invalid document; Compare validates both inputs
+            // itself and rejects it as a contract error rather than normalising it to a passing N/A.
+            BenchmarkModelResult osModel = Builders.Model(consumptionCooling: Builders.Value(500, MetricUnit.WattHour));
+
+            Assert.ThrowsException<BenchmarkValidationException>(() => Query.Compare(
+                Tas(Builders.Model(), Builders.Space(GuidA, "Office", 200, 600)),
+                OpenStudio(osModel, Builders.Space(GuidA, "Office", 200, 600)),
+                Profile));
         }
 
         [TestMethod]
         public void PeakHourDisagreementIsInformationalAndDoesNotFailTheGate()
         {
-            // Peak hours differ by 100h (a Fail-level band) but everything else matches. Per TOLERANCES.md
-            // peak-hour differences cannot produce a numerical Fail, so the gate stays Pass.
+            // Peak hours differ by 100h but everything else matches. Per TOLERANCES.md peak-hour differences
+            // are informational: the band is capped at Warn and excluded from the gate, so the gate is Pass.
             ComparisonResult result = Query.Compare(
                 Tas(Builders.Model(peakHeatingHour: Builders.Value(100, MetricUnit.HourOfYear)), Builders.Space(GuidA, "Office", 200, 600)),
                 OpenStudio(Builders.Model(peakHeatingHour: Builders.Value(200, MetricUnit.HourOfYear)), Builders.Space(GuidA, "Office", 200, 600)),
                 Profile);
 
             MetricComparison peakHour = result.ModelMetrics.Single(metric => metric.Key == "peakHeatingHour");
-            Assert.AreEqual(ComparisonBand.Fail, peakHour.Band); // reported...
+            Assert.AreEqual(ComparisonBand.Warn, peakHour.Band); // reported, capped at Warn...
             Assert.AreEqual(GateStatus.Pass, result.Gate);       // ...but excluded from the gate.
         }
 
@@ -126,9 +140,12 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
 
             SpaceComparison tasOnly = result.Spaces.Single(space => space.MatchKind == SpaceMatchKind.TasOnly);
             Assert.AreEqual(GuidB, tasOnly.Guid);
-            // Every metric of a one-sided space is N/A and cannot fail the gate.
+            // Every metric of a one-sided space is N/A, so the numerical status stays Pass...
             Assert.IsTrue(tasOnly.Metrics.All(metric => metric.Band == ComparisonBand.NotApplicable));
-            Assert.AreEqual(GateStatus.Pass, result.Gate);
+            Assert.AreEqual(GateStatus.Pass, result.NumericalStatus);
+            // ...but the unmatched space leaves coverage incomplete, so the overall gate is not a clean Pass.
+            Assert.AreEqual(GateStatus.Warn, result.CoverageStatus);
+            Assert.AreEqual(GateStatus.Warn, result.Gate);
         }
 
         [TestMethod]
@@ -173,21 +190,75 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
         }
 
         [TestMethod]
-        public void MajorSchemaIncompatibilityThrows()
+        public void EqualButNewerMinorSchemaStillWarns()
+        {
+            // Both documents are 1.1.0 (newer than the comparator's 1.0.0); even though they agree with each
+            // other, the newer minor must still be surfaced because unknown additive fields may be ignored.
+            BenchmarkDocument tas = Builders.Document(EngineKind.Tas, BenchmarkRoute.NativeTas, Builders.Model(), new[] { Builders.Space(GuidA, "Office", 200, 600) }, schemaVersion: "1.1.0");
+            BenchmarkDocument openStudio = Builders.Document(EngineKind.OpenStudio, BenchmarkRoute.NativeOpenStudio, Builders.Model(), new[] { Builders.Space(GuidA, "Office", 200, 600) }, schemaVersion: "1.1.0");
+
+            ComparisonResult result = Query.Compare(tas, openStudio, Profile);
+
+            Assert.IsNotNull(result.SchemaDriftNote);
+        }
+
+        [TestMethod]
+        public void PatchOnlySchemaDifferenceDoesNotWarn()
+        {
+            BenchmarkDocument tas = Builders.Document(EngineKind.Tas, BenchmarkRoute.NativeTas, Builders.Model(), new[] { Builders.Space(GuidA, "Office", 200, 600) }, schemaVersion: "1.0.0");
+            BenchmarkDocument openStudio = Builders.Document(EngineKind.OpenStudio, BenchmarkRoute.NativeOpenStudio, Builders.Model(), new[] { Builders.Space(GuidA, "Office", 200, 600) }, schemaVersion: "1.0.1");
+
+            ComparisonResult result = Query.Compare(tas, openStudio, Profile);
+
+            Assert.IsNull(result.SchemaDriftNote);
+        }
+
+        [TestMethod]
+        public void MajorSchemaIncompatibilityIsAContractError()
         {
             BenchmarkDocument tas = Builders.Document(EngineKind.Tas, BenchmarkRoute.NativeTas, Builders.Model(), new[] { Builders.Space(GuidA, "Office", 200, 600) }, schemaVersion: "2.0.0");
             BenchmarkDocument openStudio = Builders.Document(EngineKind.OpenStudio, BenchmarkRoute.NativeOpenStudio, Builders.Model(), new[] { Builders.Space(GuidA, "Office", 200, 600) });
 
-            Assert.ThrowsException<SchemaIncompatibleException>(() => Query.Compare(tas, openStudio, Profile));
+            Assert.ThrowsException<BenchmarkValidationException>(() => Query.Compare(tas, openStudio, Profile));
         }
 
         [TestMethod]
-        public void MalformedSchemaVersionThrows()
+        public void MalformedSchemaVersionIsAContractError()
         {
             BenchmarkDocument tas = Builders.Document(EngineKind.Tas, BenchmarkRoute.NativeTas, Builders.Model(), new[] { Builders.Space(GuidA, "Office", 200, 600) }, schemaVersion: "banana");
             BenchmarkDocument openStudio = Builders.Document(EngineKind.OpenStudio, BenchmarkRoute.NativeOpenStudio, Builders.Model(), new[] { Builders.Space(GuidA, "Office", 200, 600) });
 
-            Assert.ThrowsException<SchemaIncompatibleException>(() => Query.Compare(tas, openStudio, Profile));
+            Assert.ThrowsException<BenchmarkValidationException>(() => Query.Compare(tas, openStudio, Profile));
+        }
+
+        [TestMethod]
+        public void MismatchedWeatherMakesProvenanceIncompatibleAndPreventsPass()
+        {
+            BenchmarkDocument tas = Builders.Document(EngineKind.Tas, BenchmarkRoute.NativeTas, Builders.Model(), new[] { Builders.Space(GuidA, "Office", 200, 600) });
+            BenchmarkDocument openStudio = Builders.Document(EngineKind.OpenStudio, BenchmarkRoute.NativeOpenStudio, Builders.Model(), new[] { Builders.Space(GuidA, "Office", 200, 600) });
+            // Same model, but the two runs used a different weather file (the D10 Boston-vs-Gatwick case).
+            openStudio.Provenance!.Weather!.Hash = "sha256:9999999999999999999999999999999999999999999999999999999999999999";
+            openStudio.Provenance.Weather.Identity = "Boston.epw";
+
+            ComparisonResult result = Query.Compare(tas, openStudio, Profile);
+
+            Assert.IsFalse(result.ProvenanceCompatibility.IsCompatible);
+            Assert.AreEqual(GateStatus.Fail, result.ProvenanceStatus);
+            Assert.AreEqual(GateStatus.Fail, result.Gate);
+            Assert.IsTrue(result.ProvenanceCompatibility.Mismatches.Any(m => m.Field == "weatherHash"));
+        }
+
+        [TestMethod]
+        public void TwoDocumentsFromTheSameEngineAreIncompatible()
+        {
+            // Swapped inputs: the "openStudio" argument is actually a second TAS document.
+            BenchmarkDocument tas = Builders.Document(EngineKind.Tas, BenchmarkRoute.NativeTas, Builders.Model(), new[] { Builders.Space(GuidA, "Office", 200, 600) });
+            BenchmarkDocument alsoTas = Builders.Document(EngineKind.Tas, BenchmarkRoute.NativeTas, Builders.Model(), new[] { Builders.Space(GuidA, "Office", 200, 600) });
+
+            ComparisonResult result = Query.Compare(tas, alsoTas, Profile);
+
+            Assert.IsFalse(result.ProvenanceCompatibility.IsCompatible);
+            Assert.AreNotEqual(GateStatus.Pass, result.Gate);
         }
     }
 }

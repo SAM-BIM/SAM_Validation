@@ -35,7 +35,11 @@ namespace SAM.Analytical.Benchmark.Compare
             Line(builder, "| Field | Value |");
             Line(builder, "| --- | --- |");
             Line(builder, Row("Tolerance profile", result.ToleranceProfileName));
-            Line(builder, Row("Gate status", Format.Gate(result.Gate)));
+            Line(builder, Row("Gate status (overall)", Format.Gate(result.Gate)));
+            Line(builder, Row("Numerical status", Format.Gate(result.NumericalStatus)));
+            Line(builder, Row("Coverage status", Format.Gate(result.CoverageStatus)));
+            Line(builder, Row("Provenance status", Format.Gate(result.ProvenanceStatus)));
+            Line(builder, Row("Reconciliation status", Format.Gate(result.ReconciliationStatus)));
             Line(builder, Row("Metrics matched", result.MatchCount.ToString(System.Globalization.CultureInfo.InvariantCulture)));
             Line(builder, Row("Metrics warned", result.WarnCount.ToString(System.Globalization.CultureInfo.InvariantCulture)));
             Line(builder, Row("Metrics failed", result.FailCount.ToString(System.Globalization.CultureInfo.InvariantCulture)));
@@ -50,6 +54,7 @@ namespace SAM.Analytical.Benchmark.Compare
                 Line(builder, string.Empty);
             }
 
+            AppendProvenanceCompatibility(builder, result);
             AppendToleranceProfile(builder, result);
             AppendProvenance(builder, result);
             AppendModelMetrics(builder, result);
@@ -58,6 +63,30 @@ namespace SAM.Analytical.Benchmark.Compare
             AppendSpaceMetrics(builder, result);
 
             return builder.ToString();
+        }
+
+        private static void AppendProvenanceCompatibility(StringBuilder builder, ComparisonResult result)
+        {
+            ProvenanceCompatibility compatibility = result.ProvenanceCompatibility;
+            Line(builder, "## Provenance compatibility");
+            Line(builder, string.Empty);
+            if (compatibility.IsCompatible)
+            {
+                Line(builder, "Compatible: both runs share the same canonical model, weather and design-day basis, with the expected engine and route on each side.");
+                Line(builder, string.Empty);
+                return;
+            }
+
+            Line(builder, "**INCOMPATIBLE** — the two documents are not a valid comparison pair, so a numerical pass is not meaningful.");
+            Line(builder, string.Empty);
+            Line(builder, "| Field | TAS | OpenStudio |");
+            Line(builder, "| --- | --- | --- |");
+            foreach (ProvenanceMismatch mismatch in compatibility.Mismatches)
+            {
+                Line(builder, Row3(mismatch.Field, mismatch.Tas, mismatch.OpenStudio));
+            }
+
+            Line(builder, string.Empty);
         }
 
         private static void AppendToleranceProfile(StringBuilder builder, ComparisonResult result)

@@ -53,17 +53,46 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
         }
 
         [TestMethod]
-        public void DiagnosesDuplicateGuidAndAlignsTheFirst()
+        public void DuplicateGuidExcludesEveryMemberFromMatching()
         {
             SpaceAlignment alignment = Query.AlignSpaces(
                 new[] { Builders.Space(GuidA, "First", 40, 120), Builders.Space(GuidA, "DuplicateGuid", 41, 121) },
                 new[] { Builders.Space(GuidA, "Match", 40, 120) });
 
             CollectionAssert.AreEqual(new[] { GuidA }, alignment.Diagnostics.DuplicateTasGuids.ToArray());
-            Assert.AreEqual(1, alignment.Pairs.Count);
-            Assert.AreEqual("First", alignment.Pairs[0].Tas.Name);
-            // The duplicate that was not aligned is surfaced as TAS-only.
+            // A duplicated GUID is not uniquely identifiable, so NOTHING is matched — not even the OpenStudio
+            // side that has a single GuidA — rather than arbitrarily aligning the first duplicate.
+            Assert.AreEqual(0, alignment.Pairs.Count);
+            Assert.AreEqual(2, alignment.OnlyInTas.Count);
+            Assert.AreEqual(1, alignment.OnlyInOpenStudio.Count);
+        }
+
+        [TestMethod]
+        public void DoesNotNameMatchWhenBothSidesHaveDifferentValidGuids()
+        {
+            // Same name but two different valid GUIDs are explicit, conflicting identities: they must not be
+            // merged by name.
+            SpaceAlignment alignment = Query.AlignSpaces(
+                new[] { Builders.Space(GuidB, "Office", 40, 120) },
+                new[] { Builders.Space(GuidC, "Office", 40, 120) });
+
+            Assert.AreEqual(0, alignment.Pairs.Count);
+            CollectionAssert.Contains(alignment.Diagnostics.AmbiguousNameMatches.ToArray(), "OFFICE");
             Assert.AreEqual(1, alignment.OnlyInTas.Count);
+            Assert.AreEqual(1, alignment.OnlyInOpenStudio.Count);
+        }
+
+        [TestMethod]
+        public void NameMatchesWhenOneSideLacksAGuid()
+        {
+            // One side lacks a usable GUID, so name fallback is allowed and adopts the available GUID.
+            SpaceAlignment alignment = Query.AlignSpaces(
+                new[] { Builders.Space(null, "Office", 40, 120) },
+                new[] { Builders.Space(GuidC, "Office", 40, 120) });
+
+            Assert.AreEqual(1, alignment.Pairs.Count);
+            Assert.AreEqual(SpaceMatchKind.Name, alignment.Pairs[0].MatchKind);
+            Assert.AreEqual(GuidC, alignment.Pairs[0].Guid);
         }
 
         [TestMethod]

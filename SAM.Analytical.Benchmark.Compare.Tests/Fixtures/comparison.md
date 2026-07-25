@@ -10,13 +10,21 @@ kept separate from the gate.
 | Field | Value |
 | --- | --- |
 | Tolerance profile | default |
-| Gate status | Fail |
+| Gate status (overall) | Fail |
+| Numerical status | Fail |
+| Coverage status | Warn |
+| Provenance status | Pass |
+| Reconciliation status | Warn |
 | Metrics matched | 10 |
-| Metrics warned | 4 |
-| Metrics failed | 3 |
+| Metrics warned | 5 |
+| Metrics failed | 2 |
 | Metrics not applicable | 31 |
 | TAS schema version | 1.0.0 |
 | OpenStudio schema version | 1.0.0 |
+
+## Provenance compatibility
+
+Compatible: both runs share the same canonical model, weather and design-day basis, with the expected engine and route on each side.
 
 ## Tolerance profile
 
@@ -121,7 +129,7 @@ Additive quantities only; non-additive peak loads are not reconciled. Only uniqu
 | 0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b | Guid | volume | m3 | 120 | 132 | 12 | 9.090909090909092 | Warn |  |
 | 0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b | Guid | heating.designLoad | W |  |  |  |  | N/A | unavailable (Neither) |
 | 0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b | Guid | heating.peakLoad | W | 2100 | 2600 | 500 | 19.230769230769234 | Fail |  |
-| 0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b | Guid | heating.peakHour | hourOfYear | 205 | 240 | 35 |  | Fail | circular hour difference |
+| 0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b | Guid | heating.peakHour | hourOfYear | 205 | 240 | 35 |  | Warn | circular hour difference |
 | 0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b | Guid | heating.unmetHours | h | 0 | 0 | 0 | 0 | Match |  |
 | 0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b | Guid | cooling.designLoad | W |  |  |  |  | N/A | unavailable (Neither) |
 | 0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b | Guid | cooling.peakLoad | W |  |  |  |  | N/A | unavailable (Neither) |

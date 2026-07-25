@@ -19,10 +19,21 @@
     }
   },
   "gate": "Fail",
+  "statuses": {
+    "overall": "Fail",
+    "numerical": "Fail",
+    "coverage": "Warn",
+    "provenance": "Pass",
+    "reconciliation": "Warn"
+  },
+  "provenanceCompatibility": {
+    "compatible": true,
+    "mismatches": []
+  },
   "counts": {
     "match": 10,
-    "warn": 4,
-    "fail": 3,
+    "warn": 5,
+    "fail": 2,
     "notApplicable": 31
   },
   "schema": {
@@ -600,7 +611,7 @@
           "key": "heating.peakHour",
           "unit": "hourOfYear",
           "availability": "Both",
-          "band": "Fail",
+          "band": "Warn",
           "notApplicableReason": null,
           "circular": true,
           "tas": {

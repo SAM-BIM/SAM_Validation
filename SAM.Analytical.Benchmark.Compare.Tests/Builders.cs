@@ -87,8 +87,10 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
                 PeakHeatingHour = peakHeatingHour ?? Value(200, MetricUnit.HourOfYear),
                 PeakCoolingLoad = peakCoolingLoad ?? Value(8, MetricUnit.Kilowatt),
                 PeakCoolingHour = peakCoolingHour ?? Value(4600, MetricUnit.HourOfYear),
-                FloorArea = floorArea ?? Value(240, MetricUnit.SquareMetre),
-                Volume = volume ?? Value(720, MetricUnit.CubicMetre)
+                // Defaults line up with a single 200 m2 / 600 m3 space so a one-space document reconciles
+                // cleanly (model total == sum of spaces) unless a test overrides them.
+                FloorArea = floorArea ?? Value(200, MetricUnit.SquareMetre),
+                Volume = volume ?? Value(600, MetricUnit.CubicMetre)
             };
         }
 

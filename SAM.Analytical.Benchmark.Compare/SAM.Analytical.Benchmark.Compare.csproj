@@ -11,6 +11,16 @@
   </PropertyGroup>
 
   <!--
+    Ship the executable in the repository build\ folder (flat, unsuffixed) so CI's `**\build\*` artifact
+    upload includes benchmark-compare alongside the schema DLL, matching the producer executables.
+  -->
+  <PropertyGroup>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <OutputPath>..\build\</OutputPath>
+  </PropertyGroup>
+
+  <!--
     The comparator is engine-independent: it reads two benchmark JSON documents and never depends on
     SAM.Analytical.OpenStudio, SAM.Analytical.Tas, the OpenStudio SDK, or the TAS interop assemblies.
     It references ONLY the neutral schema library (a ProjectReference because both projects live in the
