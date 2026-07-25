@@ -199,7 +199,15 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           # Portable, engine-free MSTest suite for the B3 comparator (depends only on the neutral schema).
-          dotnet test "${{ env.REPO_NAME }}/SAM.Analytical.Benchmark.Compare.Tests/SAM.Analytical.Benchmark.Compare.Tests.csproj" -c Release
+          #
+          # SAMVersion MUST be passed here too. This test project references the schema and comparator
+          # projects, both of which output to the shared flat `build\` folder, so `dotnet test` rebuilds
+          # them into the very folder the msbuild step just stamped. Without the property,
+          # Directory.Build.props falls back to its local-dev default 1.0.0.0 and the correctly versioned
+          # assemblies are silently overwritten immediately before `Upload build folders` runs.
+          dotnet test "${{ env.REPO_NAME }}/SAM.Analytical.Benchmark.Compare.Tests/SAM.Analytical.Benchmark.Compare.Tests.csproj" `
+            -c Release `
+            "/p:SAMVersion=${{ steps.ver.outputs.samversion }}"
 
       - name: Upload build folders (optional)
         uses: actions/upload-artifact@v4
