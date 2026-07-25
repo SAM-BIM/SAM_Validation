@@ -26,9 +26,11 @@ namespace SAM.Analytical.Benchmark.Compare
             Line(builder, string.Empty);
             Line(builder, "Independent comparison of two engine-neutral benchmark documents. Tolerance bands are");
             Line(builder, "**provisional reporting buckets**, not validated thresholds. The overall gate is the worst of");
-            Line(builder, "the numerical, coverage, provenance and reconciliation statuses. Peak-hour bands are informational");
-            Line(builder, "and are excluded from the numerical status; reconciliation is a separate within-document diagnostic");
-            Line(builder, "status that also contributes to the overall gate.");
+            Line(builder, "the numerical, coverage, provenance and reconciliation statuses. Peak-hour bands and the two");
+            Line(builder, "whole-model peak-load bands are informational and are excluded from the numerical status — they are");
+            Line(builder, "still calculated and shown, and rows carrying such a band are marked in the Note column;");
+            Line(builder, "reconciliation is a separate within-document diagnostic status that also contributes to the");
+            Line(builder, "overall gate.");
             Line(builder, string.Empty);
 
             Line(builder, "## Summary");
@@ -215,9 +217,12 @@ namespace SAM.Analytical.Benchmark.Compare
             // the values fall in Pass, so they are printed with the model metrics regardless of band.
             Line(builder, "> **Caveats (apply even when values pass):** whole-model peak-load semantics differ between");
             Line(builder, "> engines — OpenStudio reports a coincident total, TAS a building-profile maximum — so peak-load");
-            Line(builder, "> comparisons are informational, not equivalence claims. The primary conditioning pairing");
-            Line(builder, "> (OpenStudio Ideal Loads ↔ TAS thermostats + IZAMs + TBD sizing) is a **candidate** pending");
-            Line(builder, "> validation. A tolerance profile cannot remove these limitations.");
+            Line(builder, "> comparisons are informational, not equivalence claims. `peakHeatingLoad` and `peakCoolingLoad`");
+            Line(builder, "> are therefore banded and shown below but **excluded from the numerical status**, exactly like the");
+            Line(builder, "> peak-hour metrics; promoting them into the gate needs the B4 corpus and energy-modeller review.");
+            Line(builder, "> Every other metric — annual energy, per-space peak loads, unmet hours, geometry — gates normally.");
+            Line(builder, "> The primary conditioning pairing (OpenStudio Ideal Loads ↔ TAS thermostats + IZAMs + TBD sizing)");
+            Line(builder, "> is a **candidate** pending validation. A tolerance profile cannot remove these limitations.");
             Line(builder, string.Empty);
             AppendMetricTableHeader(builder);
             foreach (MetricComparison metric in result.ModelMetrics)
@@ -307,7 +312,7 @@ namespace SAM.Analytical.Benchmark.Compare
                         EscapeInline(Format.Number(metric.AbsoluteDifference)),
                         EscapeInline(Format.Percent(metric.RelativeDifference)),
                         Format.Band(metric.Band),
-                        EscapeInline(Format.NotApplicableNote(metric))
+                        EscapeInline(Format.MetricNote(metric))
                     }) + " |");
                 }
             }
@@ -332,7 +337,7 @@ namespace SAM.Analytical.Benchmark.Compare
                 EscapeInline(Format.Number(metric.AbsoluteDifference)),
                 EscapeInline(Format.Percent(metric.RelativeDifference)),
                 Format.Band(metric.Band),
-                EscapeInline(Format.NotApplicableNote(metric))
+                EscapeInline(Format.MetricNote(metric))
             }) + " |");
         }
 

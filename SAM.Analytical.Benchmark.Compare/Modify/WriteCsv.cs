@@ -71,7 +71,7 @@ namespace SAM.Analytical.Benchmark.Compare
                 Format.Percent(metric.RelativeDifference),
                 Format.Number(metric.SignedDifference),
                 Format.Band(metric.Band),
-                Format.NotApplicableNote(metric)
+                Format.MetricNote(metric)
             });
         }
 

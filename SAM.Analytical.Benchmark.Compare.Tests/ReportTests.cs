@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using SAM.Analytical.Benchmark;
@@ -75,6 +76,31 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
             string markdown = Modify.WriteMarkdown(result);
             StringAssert.Contains(markdown, "| Required metrics unavailable | " + result.UnavailableRequiredMetricCount + " |");
             StringAssert.Contains(markdown, "**Coverage is INCOMPLETE**");
+        }
+
+        [TestMethod]
+        public void ReportsMarkInformationalMetricsThatCarryABand()
+        {
+            // The whole-model peak loads and the peak hours are excluded from the numerical status, so every
+            // report must say so on the row itself — otherwise a Fail band reads as a gate failure.
+            ComparisonResult result = Compare();
+            MetricComparison peakLoad = result.ModelMetrics.Single(metric => metric.Key == "peakHeatingLoad");
+            Assert.AreNotEqual(ComparisonBand.NotApplicable, peakLoad.Band);
+            Assert.IsTrue(Query.IsInformationalForNumericalGate(peakLoad));
+
+            string markdown = Modify.WriteMarkdown(result);
+            StringAssert.Contains(markdown, "| peakHeatingLoad | kW | 10 | 30 | 20 | 66.66666666666666 | Fail | informational (excluded from the numerical status) |");
+            StringAssert.Contains(markdown, "**excluded from the numerical status**");
+
+            StringAssert.Contains(Modify.WriteCsv(result), "model,peakHeatingLoad,kW,Both,10,30,20,");
+            StringAssert.Contains(Modify.WriteCsv(result), "Fail,informational (excluded from the numerical status)");
+
+            // Annual energy is NOT informational and must not be marked.
+            MetricComparison consumption = result.ModelMetrics.Single(metric => metric.Key == "consumptionHeating");
+            Assert.IsFalse(Query.IsInformationalForNumericalGate(consumption));
+            StringAssert.Contains(Modify.WriteSummaryJson(result), "\"key\": \"consumptionHeating\",");
+            StringAssert.Contains(Modify.WriteSummaryJson(result), "\"informational\": true");
+            StringAssert.Contains(Modify.WriteSummaryJson(result), "\"informational\": false");
         }
 
         [TestMethod]

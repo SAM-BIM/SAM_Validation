@@ -94,6 +94,9 @@ namespace SAM.Analytical.Benchmark.Compare
             }
         }
 
+        /// <summary>The marker appended to a metric that carries a band which cannot move the numerical status.</summary>
+        internal const string InformationalNote = "informational (excluded from the numerical status)";
+
         internal static string NotApplicableNote(MetricComparison metric)
         {
             switch (metric.NotApplicableReason)
@@ -105,6 +108,23 @@ namespace SAM.Analytical.Benchmark.Compare
                 default:
                     return metric.Circular ? "circular hour difference" : string.Empty;
             }
+        }
+
+        /// <summary>
+        /// The per-row note shown in the Markdown and CSV tables: the N/A explanation plus, for a metric
+        /// that DOES carry a real band but is designated informational, an explicit marker. Without it a
+        /// reader would see a Fail band on a whole-model peak load or a peak hour and reasonably assume it
+        /// contributed to the gate.
+        /// </summary>
+        internal static string MetricNote(MetricComparison metric)
+        {
+            string note = NotApplicableNote(metric);
+            if (metric.Band == ComparisonBand.NotApplicable || !Query.IsInformationalForNumericalGate(metric))
+            {
+                return note;
+            }
+
+            return note.Length == 0 ? InformationalNote : note + "; " + InformationalNote;
         }
     }
 }

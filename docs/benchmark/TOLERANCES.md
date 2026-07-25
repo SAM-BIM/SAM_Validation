@@ -99,9 +99,22 @@ The comparator keeps these concerns distinct:
 4. numerical bands; and
 5. reconciliation diagnostics.
 
-For numerical bands, overall severity is the worst comparable metric: Fail over Warn over Pass. `N/A` does not affect that ordering. Contract errors prevent a valid numerical gate. Coverage and reconciliation statuses are always reported alongside the numerical status so missing data cannot improve the apparent result.
+For numerical bands, overall severity is the worst comparable **non-informational** metric: Fail over Warn over Pass. `N/A` does not affect that ordering. Contract errors prevent a valid numerical gate. Coverage and reconciliation statuses are always reported alongside the numerical status so missing data cannot improve the apparent result.
 
-The whole-model peak-load caveat and candidate conditioning pairing remain visible even when their numbers fall in Pass. Tolerance profiles cannot remove those methodological limitations.
+### Informational metrics
+
+A metric may be **explicitly designated informational**: it is compared, banded and reported exactly like any other metric, but its band is excluded from the numerical status and therefore cannot fail an experiment. Two families are designated in v1:
+
+| Metric | Why it is informational |
+|---|---|
+| Every `hourOfYear` metric (model and per-space peak hours) | The absolute warn/fail hour thresholds are unreviewed |
+| `model.peakHeatingLoad` and `model.peakCoolingLoad` | METRICS.md: OpenStudio reports a coincident total while Tas takes the maximum of the building profile, so a difference can reflect aggregation semantics rather than engine physics |
+
+The designation is deliberately narrow. Annual heating and cooling energy, per-space peak and design loads, unmet hours, and all geometry metrics gate normally — the same "differing semantics" argument must not be extended to them by implication, because it would leave nothing to gate on.
+
+Informational status is expressed by exclusion, not by hiding evidence: the band is still calculated, still counted in the report's match/warn/fail totals, and every report marks the affected row so a reported Fail cannot be mistaken for a gate failure. Promoting either family into the numerical gate requires the same validation path as the bands themselves — corpus evidence across both engines plus energy-modeller review — and must be versioned and recorded with the report.
+
+The whole-model peak-load caveat and candidate conditioning pairing remain visible even when their numbers fall in Pass. Tolerance profiles cannot remove those methodological limitations, and a tolerance profile cannot change which metrics are designated informational.
 
 ## Validation path
 

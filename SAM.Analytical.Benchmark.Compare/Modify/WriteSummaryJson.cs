@@ -133,6 +133,8 @@ namespace SAM.Analytical.Benchmark.Compare
             writer.WriteString("unit", Format.Unit(metric.Unit));
             writer.WriteString("availability", Format.Availability(metric.Availability));
             writer.WriteString("band", Format.Band(metric.Band));
+            // Explicit so a downstream consumer never has to infer WHY a Fail band did not move the gate.
+            writer.WriteBoolean("informational", Query.IsInformationalForNumericalGate(metric));
             WriteStringOrNull(writer, "notApplicableReason", NullIfEmpty(Format.NotApplicableReason(metric.NotApplicableReason)));
             writer.WriteBoolean("circular", metric.Circular);
 

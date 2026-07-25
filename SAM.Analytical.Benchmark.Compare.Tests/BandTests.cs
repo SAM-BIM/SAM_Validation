@@ -157,6 +157,31 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
         }
 
         [DataTestMethod]
+        // Informational: every hour-of-year metric, plus the two whole-model peak loads.
+        [DataRow("model", "peakHeatingLoad", MetricUnit.Kilowatt, true)]
+        [DataRow("model", "peakCoolingLoad", MetricUnit.Kilowatt, true)]
+        [DataRow("model", "peakHeatingHour", MetricUnit.HourOfYear, true)]
+        [DataRow("model", "peakCoolingHour", MetricUnit.HourOfYear, true)]
+        [DataRow("a-space-guid", "heating.peakHour", MetricUnit.HourOfYear, true)]
+        // Gating: annual energy, per-space peak/design loads, unmet hours, geometry.
+        [DataRow("model", "consumptionHeating", MetricUnit.KilowattHour, false)]
+        [DataRow("model", "consumptionCooling", MetricUnit.KilowattHour, false)]
+        [DataRow("model", "floorArea", MetricUnit.SquareMetre, false)]
+        [DataRow("model", "volume", MetricUnit.CubicMetre, false)]
+        [DataRow("a-space-guid", "heating.peakLoad", MetricUnit.Watt, false)]
+        [DataRow("a-space-guid", "cooling.peakLoad", MetricUnit.Watt, false)]
+        [DataRow("a-space-guid", "heating.designLoad", MetricUnit.Watt, false)]
+        [DataRow("a-space-guid", "cooling.unmetHours", MetricUnit.Hour, false)]
+        // A space that happens to be NAMED "model" is not captured: its keys are the dotted per-space ones.
+        [DataRow("model", "heating.peakLoad", MetricUnit.Watt, false)]
+        public void OnlyDesignatedMetricsAreInformationalForTheNumericalGate(string scope, string key, MetricUnit unit, bool expected)
+        {
+            MetricComparison metric = Query.Band(scope, key, Builders.Value(10, unit), Builders.Value(11, unit), Profile);
+
+            Assert.AreEqual(expected, Query.IsInformationalForNumericalGate(metric));
+        }
+
+        [DataTestMethod]
         [DataRow(8759d, 0d, 1d)]
         [DataRow(0d, 8759d, 1d)]
         [DataRow(10d, 20d, 10d)]

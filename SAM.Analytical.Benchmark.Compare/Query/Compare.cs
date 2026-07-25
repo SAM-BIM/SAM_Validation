@@ -119,16 +119,18 @@ namespace SAM.Analytical.Benchmark.Compare
 
         private static IReadOnlyList<MetricComparison> CompareModel(BenchmarkModelResult? tas, BenchmarkModelResult? openStudio, ToleranceProfile profile)
         {
+            // ModelScope is shared with IsInformationalForNumericalGate, which recognises the two whole-model
+            // peak-load keys below by scope + key rather than by a scattered string comparison.
             return new List<MetricComparison>
             {
-                Band("model", "consumptionHeating", tas?.ConsumptionHeating, openStudio?.ConsumptionHeating, profile),
-                Band("model", "consumptionCooling", tas?.ConsumptionCooling, openStudio?.ConsumptionCooling, profile),
-                Band("model", "peakHeatingLoad", tas?.PeakHeatingLoad, openStudio?.PeakHeatingLoad, profile),
-                Band("model", "peakHeatingHour", tas?.PeakHeatingHour, openStudio?.PeakHeatingHour, profile),
-                Band("model", "peakCoolingLoad", tas?.PeakCoolingLoad, openStudio?.PeakCoolingLoad, profile),
-                Band("model", "peakCoolingHour", tas?.PeakCoolingHour, openStudio?.PeakCoolingHour, profile),
-                Band("model", "floorArea", tas?.FloorArea, openStudio?.FloorArea, profile),
-                Band("model", "volume", tas?.Volume, openStudio?.Volume, profile)
+                Band(ModelScope, "consumptionHeating", tas?.ConsumptionHeating, openStudio?.ConsumptionHeating, profile),
+                Band(ModelScope, "consumptionCooling", tas?.ConsumptionCooling, openStudio?.ConsumptionCooling, profile),
+                Band(ModelScope, "peakHeatingLoad", tas?.PeakHeatingLoad, openStudio?.PeakHeatingLoad, profile),
+                Band(ModelScope, "peakHeatingHour", tas?.PeakHeatingHour, openStudio?.PeakHeatingHour, profile),
+                Band(ModelScope, "peakCoolingLoad", tas?.PeakCoolingLoad, openStudio?.PeakCoolingLoad, profile),
+                Band(ModelScope, "peakCoolingHour", tas?.PeakCoolingHour, openStudio?.PeakCoolingHour, profile),
+                Band(ModelScope, "floorArea", tas?.FloorArea, openStudio?.FloorArea, profile),
+                Band(ModelScope, "volume", tas?.Volume, openStudio?.Volume, profile)
             };
         }
 

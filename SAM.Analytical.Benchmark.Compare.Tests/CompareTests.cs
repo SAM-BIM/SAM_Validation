@@ -61,11 +61,114 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
         }
 
         [TestMethod]
-        public void OneFailingMetricFailsTheGate()
+        public void FailingWholeModelPeakHeatingLoadIsReportedButDoesNotFailTheNumericalStatus()
+        {
+            // 10 -> 30 kW is far beyond the fail band, but METRICS.md keeps whole-model peaks informational
+            // (OpenStudio reports a coincident total, TAS a building-profile maximum), so the band is shown
+            // and the numerical status ignores it.
+            ComparisonResult result = Query.Compare(
+                Tas(Builders.Model(peakHeatingLoad: Builders.Value(10, MetricUnit.Kilowatt)), Builders.CompleteSpace(GuidA, "Office", 200, 600)),
+                OpenStudio(Builders.Model(peakHeatingLoad: Builders.Value(30, MetricUnit.Kilowatt)), Builders.CompleteSpace(GuidA, "Office", 200, 600)),
+                Profile);
+
+            MetricComparison peakLoad = result.ModelMetrics.Single(metric => metric.Key == "peakHeatingLoad");
+            Assert.AreEqual(ComparisonBand.Fail, peakLoad.Band);   // still banded and displayed...
+            Assert.AreEqual(1, result.FailCount);                  // ...and still counted in the report...
+            Assert.AreEqual(GateStatus.Pass, result.NumericalStatus); // ...but it cannot fail the experiment.
+            Assert.AreEqual(GateStatus.Pass, result.Gate);
+        }
+
+        [TestMethod]
+        public void FailingWholeModelPeakCoolingLoadIsAlsoInformational()
         {
             ComparisonResult result = Query.Compare(
-                Tas(Builders.Model(peakHeatingLoad: Builders.Value(10, MetricUnit.Kilowatt)), Builders.Space(GuidA, "Office", 200, 600)),
-                OpenStudio(Builders.Model(peakHeatingLoad: Builders.Value(30, MetricUnit.Kilowatt)), Builders.Space(GuidA, "Office", 200, 600)),
+                Tas(Builders.Model(peakCoolingLoad: Builders.Value(8, MetricUnit.Kilowatt)), Builders.CompleteSpace(GuidA, "Office", 200, 600)),
+                OpenStudio(Builders.Model(peakCoolingLoad: Builders.Value(24, MetricUnit.Kilowatt)), Builders.CompleteSpace(GuidA, "Office", 200, 600)),
+                Profile);
+
+            Assert.AreEqual(ComparisonBand.Fail, result.ModelMetrics.Single(metric => metric.Key == "peakCoolingLoad").Band);
+            Assert.AreEqual(GateStatus.Pass, result.NumericalStatus);
+        }
+
+        [TestMethod]
+        public void FailingAnnualEnergyStillFailsTheNumericalStatus()
+        {
+            // The exclusion is narrow: annual delivered energy is NOT informational and must still gate.
+            ComparisonResult result = Query.Compare(
+                Tas(Builders.Model(consumptionHeating: Builders.Value(1000, MetricUnit.KilowattHour)), Builders.CompleteSpace(GuidA, "Office", 200, 600)),
+                OpenStudio(Builders.Model(consumptionHeating: Builders.Value(400, MetricUnit.KilowattHour)), Builders.CompleteSpace(GuidA, "Office", 200, 600)),
+                Profile);
+
+            Assert.AreEqual(ComparisonBand.Fail, result.ModelMetrics.Single(metric => metric.Key == "consumptionHeating").Band);
+            Assert.AreEqual(GateStatus.Fail, result.NumericalStatus);
+            Assert.AreEqual(GateStatus.Fail, result.Gate);
+        }
+
+        [TestMethod]
+        public void FailingPerSpacePeakLoadStillFailsTheNumericalStatus()
+        {
+            // Only the WHOLE-MODEL peaks are informational; a per-space peak load gates normally.
+            ComparisonResult result = Query.Compare(
+                Tas(Builders.Model(), Builders.CompleteSpace(GuidA, "Office", 200, 600, Builders.Value(2000, MetricUnit.Watt))),
+                OpenStudio(Builders.Model(), Builders.CompleteSpace(GuidA, "Office", 200, 600, Builders.Value(6000, MetricUnit.Watt))),
+                Profile);
+
+            MetricComparison spacePeak = result.Spaces.Single().Metrics.Single(metric => metric.Key == "heating.peakLoad");
+            Assert.AreEqual(ComparisonBand.Fail, spacePeak.Band);
+            Assert.AreEqual(GateStatus.Fail, result.NumericalStatus);
+        }
+
+        [TestMethod]
+        public void GeometryAndUnmetHoursAreNotInformational()
+        {
+            BenchmarkSpaceResult openStudioSpace = Builders.CompleteSpace(GuidA, "Office", 200, 600);
+            openStudioSpace.Cooling!.UnmetHours = Builders.Value(500, MetricUnit.Hour);
+
+            ComparisonResult result = Query.Compare(
+                Tas(Builders.Model(), Builders.CompleteSpace(GuidA, "Office", 200, 600)),
+                OpenStudio(Builders.Model(), openStudioSpace),
+                Profile);
+
+            Assert.AreEqual(ComparisonBand.Fail, result.Spaces.Single().Metrics.Single(metric => metric.Key == "cooling.unmetHours").Band);
+            Assert.AreEqual(GateStatus.Fail, result.NumericalStatus);
+        }
+
+        [TestMethod]
+        public void NumericalStatusTakesTheWorstNonInformationalBand()
+        {
+            // A whole-model peak load fails and a peak hour fails (both informational), while the worst
+            // GATING metric only warns: 100 -> 112 kWh is 10.7%, inside the 15% fail band.
+            ComparisonResult result = Query.Compare(
+                Tas(
+                    Builders.Model(
+                        consumptionCooling: Builders.Value(100, MetricUnit.KilowattHour),
+                        peakHeatingLoad: Builders.Value(10, MetricUnit.Kilowatt),
+                        peakHeatingHour: Builders.Value(100, MetricUnit.HourOfYear)),
+                    Builders.CompleteSpace(GuidA, "Office", 200, 600)),
+                OpenStudio(
+                    Builders.Model(
+                        consumptionCooling: Builders.Value(112, MetricUnit.KilowattHour),
+                        peakHeatingLoad: Builders.Value(30, MetricUnit.Kilowatt),
+                        peakHeatingHour: Builders.Value(900, MetricUnit.HourOfYear)),
+                    Builders.CompleteSpace(GuidA, "Office", 200, 600)),
+                Profile);
+
+            Assert.AreEqual(ComparisonBand.Fail, result.ModelMetrics.Single(metric => metric.Key == "peakHeatingLoad").Band);
+            Assert.AreEqual(ComparisonBand.Fail, result.ModelMetrics.Single(metric => metric.Key == "peakHeatingHour").Band);
+            Assert.AreEqual(ComparisonBand.Warn, result.ModelMetrics.Single(metric => metric.Key == "consumptionCooling").Band);
+            Assert.AreEqual(2, result.FailCount);
+            Assert.AreEqual(GateStatus.Warn, result.NumericalStatus); // the worst non-informational band
+            Assert.AreEqual(GateStatus.Warn, result.Gate);
+        }
+
+        [TestMethod]
+        public void OneFailingMetricFailsTheGate()
+        {
+            // Uses annual heating, not a whole-model peak load: the peaks are informational and cannot fail
+            // the gate (see FailingWholeModelPeakHeatingLoadIsReportedButDoesNotFailTheNumericalStatus).
+            ComparisonResult result = Query.Compare(
+                Tas(Builders.Model(consumptionHeating: Builders.Value(1000, MetricUnit.KilowattHour)), Builders.Space(GuidA, "Office", 200, 600)),
+                OpenStudio(Builders.Model(consumptionHeating: Builders.Value(3000, MetricUnit.KilowattHour)), Builders.Space(GuidA, "Office", 200, 600)),
                 Profile);
 
             Assert.AreEqual(GateStatus.Fail, result.Gate);
@@ -75,11 +178,11 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
         [TestMethod]
         public void OnlyWarnMetricsGiveWarnGate()
         {
-            // 10 -> 11.2 kW: 12% difference => between 5% warn and 15% fail bands. Coverage is complete, so
-            // the Warn can only come from the numerical status.
+            // 100 -> 112 kWh: 10.7% => between the 5% warn and 15% fail bands. Annual energy gates (unlike the
+            // whole-model peaks), and coverage is complete, so the Warn can only come from the numerical status.
             ComparisonResult result = Query.Compare(
-                Tas(Builders.Model(peakHeatingLoad: Builders.Value(10, MetricUnit.Kilowatt)), Builders.CompleteSpace(GuidA, "Office", 200, 600)),
-                OpenStudio(Builders.Model(peakHeatingLoad: Builders.Value(11.2, MetricUnit.Kilowatt)), Builders.CompleteSpace(GuidA, "Office", 200, 600)),
+                Tas(Builders.Model(consumptionCooling: Builders.Value(100, MetricUnit.KilowattHour)), Builders.CompleteSpace(GuidA, "Office", 200, 600)),
+                OpenStudio(Builders.Model(consumptionCooling: Builders.Value(112, MetricUnit.KilowattHour)), Builders.CompleteSpace(GuidA, "Office", 200, 600)),
                 Profile);
 
             Assert.AreEqual(GateStatus.Warn, result.Gate);

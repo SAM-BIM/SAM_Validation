@@ -31,10 +31,11 @@ tolerance bands remain provisional reporting buckets.
 - **Result:** both producers exited `0` with `state = Success`; the comparator exited `0` and wrote
   all three reports. Durations: TAS ≈ 58 s, OpenStudio ≈ 21 s.
 - **Note:** the two neutral input documents are the verbatim producer outputs of that run. The three
-  comparison reports were **regenerated from those same committed inputs** after two comparator
+  comparison reports were **regenerated from those same committed inputs** after three comparator
   corrections landed in this PR (unavailable required metrics now count towards coverage; peak-hour
-  differences now use the profile's absolute fail threshold). The simulations were not re-run, and no
-  input byte changed — only the comparator's classification of the same data.
+  differences now use the profile's absolute fail threshold; the two whole-model peak loads are now
+  designated informational and excluded from the numerical status). The simulations were not re-run,
+  and no input byte changed — only the comparator's classification of the same data.
 
 ## What the comparator got right (its acceptance evidence)
 
@@ -74,14 +75,19 @@ SAM_OpenStudio** (separate repo, separate PR) — tracked as a follow-up; nothin
 With the correct weather and an aligned model, the whole-model numbers still diverge well beyond the
 provisional fail band:
 
-| Metric | TAS | OpenStudio | Rel. diff | Band |
-|---|---:|---:|---:|---|
-| Annual heating (kWh) | 4331.96 | 1751.18 | **59.6 %** | Fail |
-| Peak heating load (kW) | 3.934 | 5.721 | **31.2 %** | Fail |
-| Peak heating hour | 919 | 775 | 144 h | Fail band, informational only (hour metrics are excluded from the numerical status) |
-| Annual cooling (kWh) | 0 | 5.25 | 100 % | Fail |
-| Peak cooling load (kW) | 0 | 0.040 | 100 % | Fail |
-| Floor area / volume | — | — | ~2e-7 | Match |
+| Metric | TAS | OpenStudio | Rel. diff | Band | Gates? |
+|---|---:|---:|---:|---|---|
+| Annual heating (kWh) | 4331.96 | 1751.18 | **59.6 %** | Fail | **yes** |
+| Annual cooling (kWh) | 0 | 5.25 | 100 % | Fail | **yes** |
+| Peak heating load (kW) | 3.934 | 5.721 | **31.2 %** | Fail | no — designated informational |
+| Peak cooling load (kW) | 0 | 0.040 | 100 % | Fail | no — designated informational |
+| Peak heating hour | 919 | 775 | 144 h | Fail | no — `hourOfYear` |
+| Floor area / volume | — | — | ~2e-7 | Match | yes |
+
+The whole-model peak loads and peak hours are banded and shown but excluded from the numerical status
+(TOLERANCES.md → Informational metrics), so they are *not* what fails this comparison. The numerical
+status is `Fail` on the gating metrics alone — annual heating and cooling, plus per-space peak loads
+and unmet hours — which is why narrowing the exclusion did not rescue the result.
 
 Per-space heating peaks diverge similarly (sampled: 29 %, 52 %). Note TAS reports a *measured zero*
 for cooling on this heating-dominated model, so the cooling rows compare 0 against a near-zero

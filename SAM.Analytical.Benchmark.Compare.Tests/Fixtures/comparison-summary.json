@@ -119,6 +119,7 @@
       "unit": "kWh",
       "availability": "Both",
       "band": "Match",
+      "informational": false,
       "notApplicableReason": null,
       "circular": false,
       "tas": {
@@ -141,6 +142,7 @@
       "unit": "kWh",
       "availability": "TasOnly",
       "band": "N/A",
+      "informational": false,
       "notApplicableReason": "unavailable",
       "circular": false,
       "tas": {
@@ -163,6 +165,7 @@
       "unit": "kW",
       "availability": "Both",
       "band": "Fail",
+      "informational": true,
       "notApplicableReason": null,
       "circular": false,
       "tas": {
@@ -185,6 +188,7 @@
       "unit": "hourOfYear",
       "availability": "Both",
       "band": "Warn",
+      "informational": true,
       "notApplicableReason": null,
       "circular": true,
       "tas": {
@@ -207,6 +211,7 @@
       "unit": "kW",
       "availability": "Both",
       "band": "Warn",
+      "informational": true,
       "notApplicableReason": null,
       "circular": false,
       "tas": {
@@ -229,6 +234,7 @@
       "unit": "hourOfYear",
       "availability": "Both",
       "band": "Match",
+      "informational": true,
       "notApplicableReason": null,
       "circular": true,
       "tas": {
@@ -251,6 +257,7 @@
       "unit": "m2",
       "availability": "Both",
       "band": "Match",
+      "informational": false,
       "notApplicableReason": null,
       "circular": false,
       "tas": {
@@ -273,6 +280,7 @@
       "unit": "m3",
       "availability": "Both",
       "band": "Match",
+      "informational": false,
       "notApplicableReason": null,
       "circular": false,
       "tas": {
@@ -304,6 +312,7 @@
           "unit": "m2",
           "availability": "Both",
           "band": "Match",
+          "informational": false,
           "notApplicableReason": null,
           "circular": false,
           "tas": {
@@ -326,6 +335,7 @@
           "unit": "m3",
           "availability": "Both",
           "band": "Match",
+          "informational": false,
           "notApplicableReason": null,
           "circular": false,
           "tas": {
@@ -348,6 +358,7 @@
           "unit": "W",
           "availability": "Neither",
           "band": "N/A",
+          "informational": false,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -370,6 +381,7 @@
           "unit": "W",
           "availability": "Both",
           "band": "Match",
+          "informational": false,
           "notApplicableReason": null,
           "circular": false,
           "tas": {
@@ -392,6 +404,7 @@
           "unit": "hourOfYear",
           "availability": "Both",
           "band": "Match",
+          "informational": true,
           "notApplicableReason": null,
           "circular": true,
           "tas": {
@@ -414,6 +427,7 @@
           "unit": "h",
           "availability": "Both",
           "band": "Match",
+          "informational": false,
           "notApplicableReason": null,
           "circular": false,
           "tas": {
@@ -436,6 +450,7 @@
           "unit": "W",
           "availability": "Neither",
           "band": "N/A",
+          "informational": false,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -458,6 +473,7 @@
           "unit": "W",
           "availability": "Neither",
           "band": "N/A",
+          "informational": false,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -480,6 +496,7 @@
           "unit": "hourOfYear",
           "availability": "Neither",
           "band": "N/A",
+          "informational": true,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -502,6 +519,7 @@
           "unit": "h",
           "availability": "Neither",
           "band": "N/A",
+          "informational": false,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -533,6 +551,7 @@
           "unit": "m2",
           "availability": "Both",
           "band": "Warn",
+          "informational": false,
           "notApplicableReason": null,
           "circular": false,
           "tas": {
@@ -555,6 +574,7 @@
           "unit": "m3",
           "availability": "Both",
           "band": "Warn",
+          "informational": false,
           "notApplicableReason": null,
           "circular": false,
           "tas": {
@@ -577,6 +597,7 @@
           "unit": "W",
           "availability": "Neither",
           "band": "N/A",
+          "informational": false,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -599,6 +620,7 @@
           "unit": "W",
           "availability": "Both",
           "band": "Fail",
+          "informational": false,
           "notApplicableReason": null,
           "circular": false,
           "tas": {
@@ -621,6 +643,7 @@
           "unit": "hourOfYear",
           "availability": "Both",
           "band": "Fail",
+          "informational": true,
           "notApplicableReason": null,
           "circular": true,
           "tas": {
@@ -643,6 +666,7 @@
           "unit": "h",
           "availability": "Both",
           "band": "Match",
+          "informational": false,
           "notApplicableReason": null,
           "circular": false,
           "tas": {
@@ -665,6 +689,7 @@
           "unit": "W",
           "availability": "Neither",
           "band": "N/A",
+          "informational": false,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -687,6 +712,7 @@
           "unit": "W",
           "availability": "Neither",
           "band": "N/A",
+          "informational": false,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -709,6 +735,7 @@
           "unit": "hourOfYear",
           "availability": "Neither",
           "band": "N/A",
+          "informational": true,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -731,6 +758,7 @@
           "unit": "h",
           "availability": "Neither",
           "band": "N/A",
+          "informational": false,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -762,6 +790,7 @@
           "unit": "m2",
           "availability": "TasOnly",
           "band": "N/A",
+          "informational": false,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -784,6 +813,7 @@
           "unit": "m3",
           "availability": "TasOnly",
           "band": "N/A",
+          "informational": false,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -806,6 +836,7 @@
           "unit": "W",
           "availability": "Neither",
           "band": "N/A",
+          "informational": false,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -828,6 +859,7 @@
           "unit": "W",
           "availability": "TasOnly",
           "band": "N/A",
+          "informational": false,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -850,6 +882,7 @@
           "unit": "hourOfYear",
           "availability": "TasOnly",
           "band": "N/A",
+          "informational": true,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -872,6 +905,7 @@
           "unit": "h",
           "availability": "TasOnly",
           "band": "N/A",
+          "informational": false,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -894,6 +928,7 @@
           "unit": "W",
           "availability": "Neither",
           "band": "N/A",
+          "informational": false,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -916,6 +951,7 @@
           "unit": "W",
           "availability": "Neither",
           "band": "N/A",
+          "informational": false,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -938,6 +974,7 @@
           "unit": "hourOfYear",
           "availability": "Neither",
           "band": "N/A",
+          "informational": true,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -960,6 +997,7 @@
           "unit": "h",
           "availability": "Neither",
           "band": "N/A",
+          "informational": false,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -991,6 +1029,7 @@
           "unit": "m2",
           "availability": "OpenStudioOnly",
           "band": "N/A",
+          "informational": false,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -1013,6 +1052,7 @@
           "unit": "m3",
           "availability": "OpenStudioOnly",
           "band": "N/A",
+          "informational": false,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -1035,6 +1075,7 @@
           "unit": "W",
           "availability": "Neither",
           "band": "N/A",
+          "informational": false,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -1057,6 +1098,7 @@
           "unit": "W",
           "availability": "OpenStudioOnly",
           "band": "N/A",
+          "informational": false,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -1079,6 +1121,7 @@
           "unit": "hourOfYear",
           "availability": "OpenStudioOnly",
           "band": "N/A",
+          "informational": true,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -1101,6 +1144,7 @@
           "unit": "h",
           "availability": "OpenStudioOnly",
           "band": "N/A",
+          "informational": false,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -1123,6 +1167,7 @@
           "unit": "W",
           "availability": "Neither",
           "band": "N/A",
+          "informational": false,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -1145,6 +1190,7 @@
           "unit": "W",
           "availability": "Neither",
           "band": "N/A",
+          "informational": false,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -1167,6 +1213,7 @@
           "unit": "hourOfYear",
           "availability": "Neither",
           "band": "N/A",
+          "informational": true,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {
@@ -1189,6 +1236,7 @@
           "unit": "h",
           "availability": "Neither",
           "band": "N/A",
+          "informational": false,
           "notApplicableReason": "unavailable",
           "circular": false,
           "tas": {

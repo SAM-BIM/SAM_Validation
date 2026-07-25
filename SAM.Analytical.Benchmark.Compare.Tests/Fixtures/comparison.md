@@ -2,9 +2,11 @@
 
 Independent comparison of two engine-neutral benchmark documents. Tolerance bands are
 **provisional reporting buckets**, not validated thresholds. The overall gate is the worst of
-the numerical, coverage, provenance and reconciliation statuses. Peak-hour bands are informational
-and are excluded from the numerical status; reconciliation is a separate within-document diagnostic
-status that also contributes to the overall gate.
+the numerical, coverage, provenance and reconciliation statuses. Peak-hour bands and the two
+whole-model peak-load bands are informational and are excluded from the numerical status — they are
+still calculated and shown, and rows carrying such a band are marked in the Note column;
+reconciliation is a separate within-document diagnostic status that also contributes to the
+overall gate.
 
 ## Summary
 
@@ -92,18 +94,21 @@ Provisional reporting bands (not validated thresholds). Recorded so a changed pr
 
 > **Caveats (apply even when values pass):** whole-model peak-load semantics differ between
 > engines — OpenStudio reports a coincident total, TAS a building-profile maximum — so peak-load
-> comparisons are informational, not equivalence claims. The primary conditioning pairing
-> (OpenStudio Ideal Loads ↔ TAS thermostats + IZAMs + TBD sizing) is a **candidate** pending
-> validation. A tolerance profile cannot remove these limitations.
+> comparisons are informational, not equivalence claims. `peakHeatingLoad` and `peakCoolingLoad`
+> are therefore banded and shown below but **excluded from the numerical status**, exactly like the
+> peak-hour metrics; promoting them into the gate needs the B4 corpus and energy-modeller review.
+> Every other metric — annual energy, per-space peak loads, unmet hours, geometry — gates normally.
+> The primary conditioning pairing (OpenStudio Ideal Loads ↔ TAS thermostats + IZAMs + TBD sizing)
+> is a **candidate** pending validation. A tolerance profile cannot remove these limitations.
 
 | Metric | Unit | TAS | OpenStudio | Abs diff | Rel % | Band | Note |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | consumptionHeating | kWh | 1000 | 1000 | 0 | 0 | Match |  |
 | consumptionCooling | kWh | 500 |  |  |  | N/A | unavailable (TasOnly) |
-| peakHeatingLoad | kW | 10 | 30 | 20 | 66.66666666666666 | Fail |  |
-| peakHeatingHour | hourOfYear | 200 | 205 | 5 |  | Warn | circular hour difference |
-| peakCoolingLoad | kW | 8 | 8.8 | 0.8000000000000007 | 9.090909090909099 | Warn |  |
-| peakCoolingHour | hourOfYear | 8759 | 0 | 1 |  | Match | circular hour difference |
+| peakHeatingLoad | kW | 10 | 30 | 20 | 66.66666666666666 | Fail | informational (excluded from the numerical status) |
+| peakHeatingHour | hourOfYear | 200 | 205 | 5 |  | Warn | circular hour difference; informational (excluded from the numerical status) |
+| peakCoolingLoad | kW | 8 | 8.8 | 0.8000000000000007 | 9.090909090909099 | Warn | informational (excluded from the numerical status) |
+| peakCoolingHour | hourOfYear | 8759 | 0 | 1 |  | Match | circular hour difference; informational (excluded from the numerical status) |
 | floorArea | m2 | 240 | 240 | 0 | 0 | Match |  |
 | volume | m3 | 720 | 720 | 0 | 0 | Match |  |
 
@@ -151,7 +156,7 @@ Additive quantities only; non-additive peak loads are not reconciled. Only uniqu
 | 0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a | Guid | volume | m3 | 600 | 600 | 0 | 0 | Match |  |
 | 0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a | Guid | heating.designLoad | W |  |  |  |  | N/A | unavailable (Neither) |
 | 0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a | Guid | heating.peakLoad | W | 2000 | 2000 | 0 | 0 | Match |  |
-| 0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a | Guid | heating.peakHour | hourOfYear | 205 | 205 | 0 |  | Match | circular hour difference |
+| 0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a | Guid | heating.peakHour | hourOfYear | 205 | 205 | 0 |  | Match | circular hour difference; informational (excluded from the numerical status) |
 | 0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a | Guid | heating.unmetHours | h | 0 | 0 | 0 | 0 | Match |  |
 | 0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a | Guid | cooling.designLoad | W |  |  |  |  | N/A | unavailable (Neither) |
 | 0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a | Guid | cooling.peakLoad | W |  |  |  |  | N/A | unavailable (Neither) |
@@ -161,7 +166,7 @@ Additive quantities only; non-additive peak loads are not reconciled. Only uniqu
 | 0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b | Guid | volume | m3 | 120 | 132 | 12 | 9.090909090909092 | Warn |  |
 | 0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b | Guid | heating.designLoad | W |  |  |  |  | N/A | unavailable (Neither) |
 | 0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b | Guid | heating.peakLoad | W | 2100 | 2600 | 500 | 19.230769230769234 | Fail |  |
-| 0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b | Guid | heating.peakHour | hourOfYear | 205 | 240 | 35 |  | Fail | circular hour difference |
+| 0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b | Guid | heating.peakHour | hourOfYear | 205 | 240 | 35 |  | Fail | circular hour difference; informational (excluded from the numerical status) |
 | 0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b | Guid | heating.unmetHours | h | 0 | 0 | 0 | 0 | Match |  |
 | 0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b | Guid | cooling.designLoad | W |  |  |  |  | N/A | unavailable (Neither) |
 | 0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b | Guid | cooling.peakLoad | W |  |  |  |  | N/A | unavailable (Neither) |

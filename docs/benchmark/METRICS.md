@@ -35,6 +35,8 @@ B1b must compare the raw EnergyPlus SQL value, the OpenStudio result-set value, 
 
 The values are comparable reporting metrics but do not yet have proven identical semantics. OpenStudio reports its coincident-total result, while Tas takes the maximum of the Tas building profile. Differences can therefore reflect aggregation and reporting semantics as well as engine physics. These metrics remain informational until corpus evidence supports a stronger gate interpretation.
 
+Concretely, `peakHeatingLoad` and `peakCoolingLoad` are **designated informational metrics**: the comparator bands, reports and marks them, but excludes them from the numerical status, so they cannot fail an experiment on aggregation semantics the contract has not yet settled. Only these two whole-model peaks are excluded — the per-space peak loads (`heating.peakLoad` / `cooling.peakLoad`) gate normally. See [Informational metrics](TOLERANCES.md#informational-metrics).
+
 ## Per-space metrics
 
 Each space contains `area` and `volume` plus `heating` and `cooling` result groups. SAM results are selected by both space identity and `SpaceSimulationResultParameter.LoadType`.
