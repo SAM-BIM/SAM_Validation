@@ -35,6 +35,36 @@ jobs:
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
+
+      - name: Ensure the benchmark comparator references no engine assembly
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $proj = "${{ env.REPO_NAME }}/SAM.Analytical.Benchmark.Compare/SAM.Analytical.Benchmark.Compare.csproj"
+          [xml]$xml = Get-Content $proj
+          $allowedProjectReference = 'SAM.Analytical.Benchmark.csproj'
+          $violations = @()
+
+          foreach ($node in $xml.SelectNodes('//ProjectReference')) {
+            $include = [string]$node.Include
+            if ($include -notlike "*$allowedProjectReference") { $violations += "ProjectReference '$include'" }
+          }
+          # The comparator carries NO binary <Reference> and NO NuGet <PackageReference> of its own; the only
+          # dependency permitted is the neutral schema project. Anything else (an engine DLL HintPath, the
+          # OpenStudio/TAS interop packages, ...) would couple the comparator to an engine and must fail here.
+          foreach ($node in $xml.SelectNodes('//Reference')) {
+            $violations += "binary Reference '$([string]$node.Include)'"
+          }
+          foreach ($node in $xml.SelectNodes('//PackageReference')) {
+            $violations += "PackageReference '$([string]$node.Include)'"
+          }
+
+          if ($violations.Count -gt 0) {
+            Write-Error ("The benchmark comparator must reference ONLY $allowedProjectReference. Offending references: " + ($violations -join '; '))
+            exit 1
+          }
+          Write-Host "Comparator references only the neutral schema project."
+
       - name: Compute SAMVersion
         id: ver
         shell: pwsh
@@ -163,6 +193,21 @@ jobs:
             Write-Host "==> Rebuild: $sln"
             & msbuild $sln /t:Rebuild @common
           }
+
+      - name: Test benchmark comparator (dotnet test)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # Portable, engine-free MSTest suite for the B3 comparator (depends only on the neutral schema).
+          #
+          # SAMVersion MUST be passed here too. This test project references the schema and comparator
+          # projects, both of which output to the shared flat `build\` folder, so `dotnet test` rebuilds
+          # them into the very folder the msbuild step just stamped. Without the property,
+          # Directory.Build.props falls back to its local-dev default 1.0.0.0 and the correctly versioned
+          # assemblies are silently overwritten immediately before `Upload build folders` runs.
+          dotnet test "${{ env.REPO_NAME }}/SAM.Analytical.Benchmark.Compare.Tests/SAM.Analytical.Benchmark.Compare.Tests.csproj" `
+            -c Release `
+            "/p:SAMVersion=${{ steps.ver.outputs.samversion }}"
 
       - name: Upload build folders (optional)
         uses: actions/upload-artifact@v4
