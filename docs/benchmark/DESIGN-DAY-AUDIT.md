@@ -94,7 +94,7 @@ availability discipline, plus a mandatory basis:
 | `value` | number or null | Finite; `null` if and only if `available` is `false` |
 | `unit` | string | Canonical unit token, always present, never inferred from the field name |
 | `available` | boolean | `true` only when the source genuinely supplied it; a measured zero is available |
-| `basis` | string or null | `Observed`, `EngineEchoed` or `Reconstructed`; `null` if and only if `available` is `false` |
+| `basis` | string or null | `Observed`, `EngineEchoed`, `Reconstructed` or `Calculated`; `null` if and only if `available` is `false` |
 
 `basis` records **how the number came to exist**, independently of the representation it sits in:
 
@@ -102,7 +102,14 @@ availability discipline, plus a mandatory basis:
 |---|---|
 | `Observed` | Read from the model or an input file as authored. No engine processing, no fitting. |
 | `EngineEchoed` | Read from the engine's own echo of what it accepted (`.eio`, `ZoneSizes`). The engine's value, after its input processing. |
-| `Reconstructed` | Computed by the producer from `EngineEchoed` inputs using a documented algorithm. Never the engine's own output. |
+| `Reconstructed` | Computed by the producer from `EngineEchoed` inputs using a documented **engine** algorithm — it models what the engine would have done. Never the engine's own output. |
+| `Calculated` | Plain arithmetic over other values **in the same document**, with no modelling assumption — for example an absolute difference between two `Observed` elevations. |
+
+`Calculated` is deliberately narrow, and is not a softer synonym for `Reconstructed`. A `Reconstructed`
+value substitutes for something the engine never reported and can therefore be wrong about the engine;
+a `Calculated` value is derived from values already present and can only be wrong about arithmetic. Every
+`Calculated` field in this contract carries a validation rule fixing it to its operands
+([§9](#9-validation-rules)), so it can never contradict them.
 
 A separate type from `MetricValue` is deliberate: it keeps audit evidence structurally incapable of
 entering the gating comparator, and it forces the basis to be stated on every number rather than
@@ -119,11 +126,15 @@ cannot produce:
 
 | Field | Type | Requirement |
 |---|---|---|
-| `quantity` | string | Quantity token ([§6](#6-stage-a--conditions)) |
-| `unit` | string | Canonical unit token |
-| `basis` | string | `Observed` or `Reconstructed`; a series is never `EngineEchoed` in v1 |
+| `quantity` | string | Quantity token for the series' own stage — [§6](#6-stage-a--conditions) for Stage A, [§7](#stage-b-quantity-tokens) for Stage B |
+| `unit` | string | Canonical unit token; present even when the series is unavailable, because the quantity is still declared |
+| `basis` | string or null | `Observed` or `Reconstructed`; **`null` if and only if `available` is `false`**. A series is never `EngineEchoed` in v1 |
 | `available` | boolean | `false` when the source cannot supply this quantity at all |
-| `values` | array or null | Exactly 24 finite numbers, hour 0 to hour 23 local standard time; `null` when unavailable |
+| `values` | array or null | Exactly 24 finite numbers, hour 0 to hour 23 local standard time; `null` if and only if `available` is `false` |
+
+An unavailable series therefore carries its `quantity` and `unit` with `basis: null` and `values: null` —
+the declaration survives, and nothing claims a basis for a series that does not exist. This is the same
+availability discipline as `AuditValue`, applied at series granularity.
 
 Partial series are invalid: 24 values or `null`. A quantity the source does not carry is
 `available: false`, never zero-filled — a zero-filled solar profile is indistinguishable from a real
@@ -141,9 +152,13 @@ binaries. Every field below is required unless marked otherwise.
 
 | Field | Type | Meaning |
 |---|---|---|
-| `role` | string | `SourceModel`, `Weather`, `Tbd`, `Tsd`, `Eio`, `Sql`, `Idf`, `Osm` |
+| `role` | string | `SourceModel`, `Weather`, `Ddy`, `Tbd`, `Tsd`, `Eio`, `Sql`, `Idf`, `Osm` |
 | `identity` | string | Portable identity — file name or station label, **never an absolute path** |
 | `hash` | string | `sha256:` plus 64 lowercase hexadecimal characters, over the exact bytes read |
+
+`Ddy` is a distinct role from `Weather`: a DDY file supplies design days while the EPW supplies the
+annual year, they are separate files with separate hashes, and a run whose `origin` is `Ddy` must record
+it under its own role rather than conflating the two inputs.
 
 The model and weather entries must agree with the corresponding `benchmark-<engine>.json` hashes when
 the two documents describe the same run.
@@ -243,7 +258,7 @@ meters` between model and weather file:
 |---|---|---|
 | `modelSiteElevation` | `AuditValue` | Elevation carried by the SAM model, `m` |
 | `weatherFileElevation` | `AuditValue` | Elevation carried by the weather file, `m` |
-| `absoluteDifference` | `AuditValue` | Absolute difference, `m` |
+| `absoluteDifference` | `AuditValue` | Absolute difference, `m`; `basis: Calculated`, and `available: false` whenever either operand is unavailable |
 | `engineElevationUsed` | `AuditValue` | The elevation the engine states it used, `m` |
 | `elevationAuthority` | string | `Model`, `WeatherFile`, `TranslatedSite` or `Unknown` |
 | `barometricPressureUsed` | `AuditValue` | Pressure the engine states it used, `Pa` |
@@ -288,10 +303,11 @@ evaluating equivalent conditions.
 ([§5.3](#53-design-day-identity-and-location)), a declared `representations` array, and whichever of
 the two payloads it can supply.
 
-`parametric` is present when the entry offers `ProcessedParametric`. Every field carries
-`basis: EngineEchoed`, but **not every field is numeric**, so the block uses three shapes. All three
-share the `available`/`basis` discipline of [§4](#4-auditvalue-and-hourlyseries); they differ only in the
-type of `value`:
+`parametric` is present when the entry offers `ProcessedParametric`. Every **available** field carries
+`basis: EngineEchoed`, since the whole block is the engine's own echo; an unavailable field carries
+`basis: null` like any other. **Not every field is numeric**, so the block uses three shapes, all sharing
+the `available`/`basis` discipline of [§4](#4-auditvalue-and-hourlyseries) and differing only in the type
+of `value`:
 
 | Shape | `value` type | `unit` | Used for |
 |---|---|---|---|
@@ -473,15 +489,17 @@ A document is invalid if any of the following holds:
 
 1. `available` is `true` and `value` is `null`, or `available` is `false` and `value` is non-null.
 2. `available` is `true` and `basis` is `null`, or `available` is `false` and `basis` is non-null.
-3. A `HourlySeries` has `values` whose length is not exactly 24, or is `available: true` with `null`
-   values.
+3. A `HourlySeries` is `available: true` with `null` `values`, or `available: false` with non-null
+   `values`, or has `values` whose length is not exactly 24.
 4. A `HourlySeries` `quantity` token is absent, or is not in the token list **for its own stage** —
    Stage A quantities in Stage A, Stage B quantities in Stage B, never crossed.
-5. An `AuditValue` has no `unit`, or its `unit` is not a token named in this document. An `AuditToken` or
-   `AuditFlag` carries a `unit` at all.
-6. An `AuditToken` value is not a string, or an `AuditFlag` value is not a boolean, or an `AuditValue`
-   value is not a finite number.
-7. A series carries `basis: EngineEchoed`.
+5. An `AuditValue` or `HourlySeries` has no `unit`, or its `unit` is not a token named in this document.
+   An `AuditToken` or `AuditFlag` carries a `unit` at all.
+6. **A non-null** `AuditToken` value is not a string, or a non-null `AuditFlag` value is not a boolean,
+   or a non-null `AuditValue` value is not a finite number. A `null` value is governed by rule 1 alone,
+   so an unavailable field of any shape is valid.
+7. A non-null series `basis` is anything other than `Observed` or `Reconstructed` — in particular
+   `EngineEchoed` is never valid on a series.
 8. A `Reconstructed` series exists without `stageA.reconstruction`.
 9. A `stageB` record names a `designDayKey` absent from `stageA.designDays`.
 10. `alignmentKey` is non-null and `alignmentKeyVersion` is absent, or `alignmentKey` is non-null while
@@ -492,12 +510,19 @@ A document is invalid if any of the following holds:
 12. A hash is not `sha256:` plus 64 lowercase hexadecimal characters.
 13. An array is not ordered by the total sort key this document declares for it.
 14. `stageA` and `stageB` content is interleaved in one object.
+15. `origin` is `Ddy` and no `sourceFiles` entry carries the `Ddy` role.
+16. A `Calculated` value does not equal the arithmetic its definition states over its operands, or is
+    `available: true` while any operand is `available: false`. For `elevation.absoluteDifference` the
+    operands are `modelSiteElevation` and `weatherFileElevation`, and the arithmetic is the absolute
+    difference.
 
 Rules 2, 5, 6, 7, 8 and 11 exist to make the central failure mode — an unlabelled, mistyped or
-over-claimed value — a validation error rather than a reporting judgement. Rule 10 makes the
-cross-document pairing key self-checking, so a producer cannot hand-write a key that its own declared
-rules would not produce. Rule 13 makes non-determinism a contract error rather than something a reader
-discovers from a noisy diff.
+over-claimed value — a validation error rather than a reporting judgement. Rules 1, 2, 3 and 6 together
+give every shape one availability discipline: unavailable means `value`/`values` **and** `basis` are
+`null`, and no type rule fires on a `null`. Rule 10 makes the cross-document pairing key self-checking,
+so a producer cannot hand-write a key that its own declared rules would not produce. Rule 13 makes
+non-determinism a contract error rather than something a reader discovers from a noisy diff. Rule 16
+makes a `Calculated` value unable to contradict the values it was derived from.
 
 A duplicated `alignmentKey` is deliberately **not** an error: it is a legitimate model condition, handled
 by excluding the whole group from pairing ([§5.3.1](#531-cross-document-alignment)) and reporting it as
@@ -531,7 +556,9 @@ These need a decision before implementation, and are the reason this document is
 4. **Does the audit live beside the benchmark reports** in `docs/benchmark/reports/<date>-…/`, or in its
    own `docs/benchmark/design-day-audit/` tree?
 5. **Does `ObservedHourly` need a parametric summary field**, so collapse loss can be computed without
-   the comparator re-deriving max/range/mean from the series each time?
+   the comparator re-deriving max/range/mean from the series each time? Such a summary would carry
+   `basis: Calculated` and fall under validation rule 16, so it could not disagree with the series it
+   summarises.
 6. **Is `loadType` + normalised name a strong enough `alignmentKey`?** SAM `DesignDay` has no GUID, so
    the key rests on the name. Adding `month` and `dayOfMonth` would harden it against two same-named
    days, at the cost of failing to pair when one route drops the calendar position. The recorded

@@ -62,7 +62,7 @@ A configurable reporting classification based on the difference between two avai
 
 ## Value basis
 
-How an audited number came to exist, declared on every audit value: `Observed` (read as authored), `EngineEchoed` (the engine's own echo of what it accepted) or `Reconstructed` (computed by the producer from echoed inputs). It is recorded independently of the representation the value sits in, so an over-claimed value is a validation error rather than a matter of wording. See [DESIGN-DAY-AUDIT.md](DESIGN-DAY-AUDIT.md).
+How an audited number came to exist, declared on every audit value: `Observed` (read as authored), `EngineEchoed` (the engine's own echo of what it accepted), `Reconstructed` (modelled by the producer from echoed inputs using a documented engine algorithm) or `Calculated` (plain arithmetic over values already in the same document). It is recorded independently of the representation the value sits in, so an over-claimed value is a validation error rather than a matter of wording. See [DESIGN-DAY-AUDIT.md](DESIGN-DAY-AUDIT.md).
 
 ## Whole-model reconciliation
 
