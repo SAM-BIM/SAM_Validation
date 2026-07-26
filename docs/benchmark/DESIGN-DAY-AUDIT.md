@@ -60,7 +60,8 @@ nesting below is normative:
   },
   "stageA": {
     "designDays": [ {
-      key, alignmentKey, alignmentKeyVersion, name, sourceDesignDayName,
+      key, alignmentKey, alignmentKeySource, alignmentKeyVersion,
+      name, sourceDesignDayName,
       loadType, dayType, month, dayOfMonth, origin, location,               // §5.3
       representations: [ … ], parametric: { … }, series: [ … ]              // §6
     } ],
@@ -248,9 +249,10 @@ measurement:
 |---|---|---|
 | `key` | string | Stable **within-document** key; the join target for Stage B. Not comparable across documents |
 | `alignmentKey` | string or null | **Cross-document** pairing key; see [§5.3.1](#531-cross-document-alignment) |
+| `alignmentKeySource` | string | `SamModel`, `DdyFile` or `None` — which common ancestor the key was derived from |
 | `alignmentKeyVersion` | string | Semantic version of the derivation rules below; required whenever `alignmentKey` is non-null |
 | `name` | string | Verbatim engine/model name, unmodified — e.g. `London_TRY ANN HTG 100% CONDS DB` |
-| `sourceDesignDayName` | string or null | The SAM source design-day name the key was derived from; `null` when the day cannot be traced to one |
+| `sourceDesignDayName` | string or null | The common-ancestor design-day name the key was derived from; `null` when the day cannot be traced to one |
 | `loadType` | string | `Heating` or `Cooling` |
 | `dayType` | string or null | Engine day-type token, e.g. `WinterDesignDay` |
 | `month`, `dayOfMonth` | number or null | Calendar position when declared |
@@ -279,8 +281,9 @@ neither can pair a TAS day with an EnergyPlus day. Without a defined cross-docum
 Stage A comparisons and the Stage B interpretation that rests on them would be ambiguous. `alignmentKey`
 supplies it.
 
-**The common ancestor is the SAM model.** SAM `DesignDay` derives from `Weather.WeatherDay` and carries
-**no GUID**, so the key is derived from its stable attributes rather than an identifier:
+**The key is derived from whatever the two routes share.** Neither SAM `DesignDay` (which derives from
+`Weather.WeatherDay`) nor a DDY design day carries a GUID, so the key is composed from stable attributes
+rather than an identifier:
 
 ```text
 alignmentKey = "<LoadType>|<NormalisedSourceName>"
@@ -292,18 +295,36 @@ where `LoadType` is `Heating` or `Cooling`, and `NormalisedSourceName` is `sourc
 2. every internal run of white space collapsed to one space (U+0020);
 3. upper-cased with `ToUpperInvariant`.
 
-Both producers must derive the key from the **SAM source design day**, never from a name the engine
-assigned or rewrote. `alignmentKeyVersion` is `1.0.0` for these rules; a changed normalisation requires a
-new version, so an algorithm change can never masquerade as a changed design day — the same discipline
-`canonicalizationVersion` applies to model hashes.
+`alignmentKeySource` declares **which common ancestor** the name came from, so the basis of a pairing is
+never guessed:
+
+| `origin` | `alignmentKeySource` | `sourceDesignDayName` is |
+|---|---|---|
+| `EmbeddedModel` | `SamModel` | the SAM source design-day name |
+| `Ddy` | `DdyFile` | the design-day name as carried in the DDY file |
+| `Unknown` | `None` | `null`, and `alignmentKey` is `null` |
+
+A DDY-sourced key is legitimate precisely because both producers can read the **same DDY file**, and the
+`Ddy` `sourceFiles` hash proves it is the same bytes. Excluding the `Ddy` origin would make a route the
+contract explicitly supports impossible to compare.
+
+Producers must never derive the key from a name the engine assigned or rewrote. `alignmentKeyVersion` is
+`1.0.0` for these rules; a changed normalisation requires a new version, so an algorithm change can never
+masquerade as a changed design day — the same discipline `canonicalizationVersion` applies to model
+hashes.
 
 Pairing rules, all normative:
 
 - The comparator pairs **only** on exactly equal `alignmentKey`. There is no fuzzy, positional or
   nearest-name fallback.
-- `alignmentKey` is `null` when the day cannot be traced to a SAM source day — which is the expected case
-  for `origin` of `Ddy` or `Unknown`. A null-keyed day is **not pairable**: it is reported one-sided and
-  never guessed into a pair.
+- Two days pair only when their `alignmentKeySource` values also agree. A `SamModel` key and a `DdyFile`
+  key are not interchangeable even if the names coincide.
+- When `alignmentKeySource` is `DdyFile`, pairing **additionally requires the two documents' `Ddy`
+  `sourceFiles` hashes to be equal**. Two different DDY files can carry identically named days — ASHRAE
+  station names repeat — and without the hash condition the comparator would pair days from different
+  weather sources.
+- `alignmentKey` is `null` only when the day has no traceable common ancestor, i.e. `origin` of
+  `Unknown`. A null-keyed day is **not pairable**: it is reported one-sided and never guessed into a pair.
 - If two days in one document share an `alignmentKey`, **every** member of that group is excluded from
   pairing and reported as ambiguous. This mirrors the duplicate-GUID rule for space alignment in
   [METHODOLOGY.md](METHODOLOGY.md#space-identity-and-alignment) — first-match would silently pair the
@@ -586,14 +607,23 @@ A document is invalid if any of the following holds:
 6. **A non-null** `AuditToken` value is not a string, or a non-null `AuditFlag` value is not a boolean,
    or a non-null `AuditValue` value is not a finite number. A `null` value is governed by rule 1 alone,
    so an unavailable field of any shape is valid.
-7. A non-null series `basis` is anything other than `Observed`, `Reconstructed` or `EngineReported` — in
-   particular `EngineEchoed` is never valid on a series. A non-null basis on any available `stageB` value
-   or series is anything other than `EngineReported`.
+7. A basis contradicts the block it sits in:
+   - a non-null series `basis` is anything other than `Observed`, `Reconstructed` or `EngineReported` —
+     `EngineEchoed` is never valid on a series;
+   - any available `stageB` value or series carries a basis other than `EngineReported`;
+   - any available `parametric` value, token or flag carries a basis other than `EngineEchoed`. The
+     block is by definition the engine's echo of its accepted inputs, so `Observed`, `EngineReported`,
+     `Reconstructed` and `Calculated` are all invalid there.
 8. A `Reconstructed` series exists without `stageA.reconstruction`.
 9. A `stageB` record names a `designDayKey` absent from `stageA.designDays`.
-10. `alignmentKey` is non-null and `alignmentKeyVersion` is absent, or `alignmentKey` is non-null while
-    `sourceDesignDayName` is `null`, or `alignmentKey` does not equal the value the declared
-    `alignmentKeyVersion` rules produce from `loadType` and `sourceDesignDayName`.
+10. The alignment key is internally inconsistent:
+    - `alignmentKey` is non-null and `alignmentKeyVersion` is absent, or `sourceDesignDayName` is `null`;
+    - `alignmentKey` does not equal the value the declared `alignmentKeyVersion` rules produce from
+      `loadType` and `sourceDesignDayName`;
+    - `alignmentKeySource` is absent, or disagrees with `origin` — `EmbeddedModel` requires `SamModel`,
+      `Ddy` requires `DdyFile`, `Unknown` requires `None`;
+    - `alignmentKeySource` is `None` while `alignmentKey` is non-null, or is `SamModel`/`DdyFile` while
+      `alignmentKey` is `null`.
 11. `reportedLoadBasis`, `pressureBasis`, `elevationAuthority` or `factorSource` is missing. `Unknown` is
     a valid value; omission is not.
 12. A hash is not `sha256:` plus 64 lowercase hexadecimal characters.
@@ -617,10 +647,14 @@ A document is invalid if any of the following holds:
 19. A `stageB` record has a `null` `guid` **and** a missing or empty `name`, leaving it unidentifiable.
 20. A root property other than `auditSchemaVersion`, `provenance`, `stageA`, `stageB` is required by a
     producer for correct interpretation, or `stageA`/`stageB` is nested inside the other.
-21. Two `stageB.spaces` records share the same `(guid, name, designDayKey, loadType)`. One space, one
-    design day and one load type yield exactly one record, so a duplicate compound key is an extraction
-    defect — and it would leave the declared sort key tied, making serialization fall back to producer
-    enumeration order and the document non-deterministic despite the key being called total.
+21. Two `stageB.spaces` records share the same **effective space identity** for one design day and load
+    type — that is, the same `(guid, designDayKey, loadType)` when `guid` is non-null, or the same
+    `(name, designDayKey, loadType)` when it is `null`. Uniqueness follows the GUID-first identity rule,
+    not the sort key: two records with one GUID and two different names would satisfy a
+    `(guid, name, …)` check while still double-counting a single space. One space, one design day and one
+    load type yield exactly one record, so a duplicate is an extraction defect — and it would leave the
+    declared sort key tied, making serialization fall back to producer enumeration order and the document
+    non-deterministic despite the key being called total.
 
 Rules 2, 5, 6, 7, 8 and 11 exist to make the central failure mode — an unlabelled, mistyped or
 over-claimed value — a validation error rather than a reporting judgement. Rules 1, 2, 3 and 6 together
