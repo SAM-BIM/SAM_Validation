@@ -137,16 +137,23 @@ availability discipline, plus a mandatory basis:
 | `value` | number or null | Finite; `null` if and only if `available` is `false` |
 | `unit` | string | Canonical unit token, always present, never inferred from the field name |
 | `available` | boolean | `true` only when the source genuinely supplied it; a measured zero is available |
-| `basis` | string or null | `Observed`, `EngineEchoed`, `Reconstructed` or `Calculated`; `null` if and only if `available` is `false` |
+| `basis` | string or null | `Observed`, `EngineEchoed`, `EngineReported`, `Reconstructed` or `Calculated`; `null` if and only if `available` is `false` |
 
 `basis` records **how the number came to exist**, independently of the representation it sits in:
 
 | `basis` | Meaning |
 |---|---|
 | `Observed` | Read from the model or an input file as authored. No engine processing, no fitting. |
-| `EngineEchoed` | Read from the engine's own echo of what it accepted (`.eio`, `ZoneSizes`). The engine's value, after its input processing. |
-| `Reconstructed` | Computed by the producer from `EngineEchoed` inputs using a documented **engine** algorithm — it models what the engine would have done. Never the engine's own output. |
+| `EngineEchoed` | The engine restating an **input** it accepted, after its own input processing — the `.eio` design-day parameter echo. |
+| `EngineReported` | A **result** the engine computed and reported — a TSD design-day zone load, a `ZoneSizes` sizing load. |
+| `Reconstructed` | Modelled by the producer from `EngineEchoed` inputs using a documented **engine** algorithm — what the engine would have done. Never the engine's own output. |
 | `Calculated` | Plain arithmetic over other values **in the same document**, with no modelling assumption — for example an absolute difference between two `Observed` elevations. |
+
+`EngineEchoed` and `EngineReported` are separated deliberately, and the distinction is the axis this whole
+audit turns on: an echo tells you **what the engine was asked to simulate**, a report tells you **what it
+produced**. Stage A is largely echoes and Stage B is entirely reports, which is why the two stages cannot
+share a status. Collapsing them into one "came from the engine" basis would hide the difference between a
+design day being mistranslated and a design day being simulated differently.
 
 `Calculated` is deliberately narrow, and is not a softer synonym for `Reconstructed`. A `Reconstructed`
 value substitutes for something the engine never reported and can therefore be wrong about the engine;
@@ -171,13 +178,21 @@ cannot produce:
 |---|---|---|
 | `quantity` | string | Quantity token for the series' own stage — [§6](#6-stage-a--conditions) for Stage A, [§7](#stage-b-quantity-tokens) for Stage B |
 | `unit` | string | Canonical unit token; present even when the series is unavailable, because the quantity is still declared |
-| `basis` | string or null | `Observed` or `Reconstructed`; **`null` if and only if `available` is `false`**. A series is never `EngineEchoed` in v1 |
+| `basis` | string or null | `Observed`, `Reconstructed` or `EngineReported`; **`null` if and only if `available` is `false`**. Never `EngineEchoed` — an echo is an input parameter, not a profile |
 | `available` | boolean | `false` when the source cannot supply this quantity at all |
 | `values` | array or null | Exactly 24 finite numbers, hour 0 to hour 23 local standard time; `null` if and only if `available` is `false` |
 
 An unavailable series therefore carries its `quantity` and `unit` with `basis: null` and `values: null` —
 the declaration survives, and nothing claims a basis for a series that does not exist. This is the same
 availability discipline as `AuditValue`, applied at series granularity.
+
+Which basis a series carries follows from its stage:
+
+| Series | Basis |
+|---|---|
+| Stage A, TAS outdoor conditions from TBD | `Observed` |
+| Stage A, EnergyPlus outdoor conditions reconstructed from `.eio` | `Reconstructed` |
+| Stage B, TAS zone response from TSD | `EngineReported` |
 
 Partial series are invalid: 24 values or `null`. A quantity the source does not carry is
 `available: false`, never zero-filled — a zero-filled solar profile is indistinguishable from a real
@@ -464,6 +479,10 @@ comparator**.
 `peakHour` is an hour **of the design day**, deliberately a different unit token from the benchmark's
 `hourOfYear`, so the two can never be silently compared.
 
+Every available Stage B value carries `basis: EngineReported` — Stage B is entirely engine **results**,
+not echoed inputs. `EngineEchoed` is never valid here, and `Reconstructed` would mean the producer had
+modelled the engine's response rather than read it, which v1 does not do.
+
 ### Stage B quantity tokens
 
 `HourlySeries.quantity` is drawn from a **stage-specific** token list. Stage A quantities describe
@@ -567,8 +586,9 @@ A document is invalid if any of the following holds:
 6. **A non-null** `AuditToken` value is not a string, or a non-null `AuditFlag` value is not a boolean,
    or a non-null `AuditValue` value is not a finite number. A `null` value is governed by rule 1 alone,
    so an unavailable field of any shape is valid.
-7. A non-null series `basis` is anything other than `Observed` or `Reconstructed` — in particular
-   `EngineEchoed` is never valid on a series.
+7. A non-null series `basis` is anything other than `Observed`, `Reconstructed` or `EngineReported` — in
+   particular `EngineEchoed` is never valid on a series. A non-null basis on any available `stageB` value
+   or series is anything other than `EngineReported`.
 8. A `Reconstructed` series exists without `stageA.reconstruction`.
 9. A `stageB` record names a `designDayKey` absent from `stageA.designDays`.
 10. `alignmentKey` is non-null and `alignmentKeyVersion` is absent, or `alignmentKey` is non-null while
@@ -597,6 +617,10 @@ A document is invalid if any of the following holds:
 19. A `stageB` record has a `null` `guid` **and** a missing or empty `name`, leaving it unidentifiable.
 20. A root property other than `auditSchemaVersion`, `provenance`, `stageA`, `stageB` is required by a
     producer for correct interpretation, or `stageA`/`stageB` is nested inside the other.
+21. Two `stageB.spaces` records share the same `(guid, name, designDayKey, loadType)`. One space, one
+    design day and one load type yield exactly one record, so a duplicate compound key is an extraction
+    defect — and it would leave the declared sort key tied, making serialization fall back to producer
+    enumeration order and the document non-deterministic despite the key being called total.
 
 Rules 2, 5, 6, 7, 8 and 11 exist to make the central failure mode — an unlabelled, mistyped or
 over-claimed value — a validation error rather than a reporting judgement. Rules 1, 2, 3 and 6 together
