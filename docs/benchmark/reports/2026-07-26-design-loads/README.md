@@ -102,13 +102,24 @@ This is the substantive finding, and it bears directly on the open sizing-factor
 | `13a0403a` | 199.8 | 132.9 | 33.5 % | OS lower |
 | **Sum** | **4111.7** | **5739.8** | — | OS/TAS = **1.396** |
 
-Five rows up, five rows down, with the aggregate 39.6 % higher on the OpenStudio side. **A uniform
-sizing margin cannot produce that pattern** — a constant factor applied to comparable physics would
-move every row the same way. This is the evidence the previous handover asked for on whether TBD's
-`maxHeatingLoad` is pre- or post-factor: whatever the remaining difference is, it is **not** a single
-multiplicative margin, so the disagreement will not be resolved by identifying one sizing factor.
-The producer already reports `CalcDesLoad` rather than `UserDesLoad`, so EnergyPlus's own 1.25 sizing
-factor is excluded on that side.
+Five rows up, five rows down, with the aggregate 39.6 % higher on the OpenStudio side. What this
+establishes is bounded: **no single multiplicative factor maps the TAS column onto the OpenStudio
+column**, so a uniform sizing margin is ruled out as the *sole* explanation of the design-load
+disagreement. The producer already reports `CalcDesLoad` rather than `UserDesLoad`, so EnergyPlus's
+own 1.25 sizing factor is excluded on that side.
+
+**It does not settle whether TBD's `maxHeatingLoad` is pre- or post-factor**, and this run should not
+be cited as having answered that. Two reasons:
+
+- That question is about the TAS side alone. Answering it means comparing a TAS design load against
+  its own unfactored TBD result — not against OpenStudio.
+- This report documents that the two engines are **not evaluating comparable physics**: the
+  design-day translation is lossy (Result 3) and the OpenStudio side drops two apertures. A constant
+  multiplier applied to the TAS loads is therefore entirely consistent with ratios above 1 in some
+  spaces and below 1 in others, whenever the underlying per-space loads already differ. The
+  bidirectional spread cannot separate a sizing margin from that redistribution.
+
+The sizing-factor question stays **open for Stage B**.
 
 ### An observed correlation, offered as a lead only
 
@@ -206,6 +217,7 @@ The 56 unavailable required metrics (all 14 spaces matched, so none of this is a
   metric moved.
 - **Diagnostic visibility: closed.** The producer's own warnings now name the London design days, the
   humidity/solar approximations and the skipped apertures, inside the committed artefact.
-- **Engine equivalence: open, and the sizing-factor explanation is now ruled out** as a single
-  cause — the design loads disagree in both directions. Next: the `design-day-audit-v1` neutral
+- **Engine equivalence: open.** No single multiplicative margin reconciles the ten design-load rows,
+  but the TAS pre/post-factor question is untouched by this run and stays open — it needs a TAS design
+  load compared against its own unfactored TBD result. Next: the `design-day-audit-v1` neutral
   contract, then the TAS (TBD + TSD) and OpenStudio (`.eio`) design-day producers.
