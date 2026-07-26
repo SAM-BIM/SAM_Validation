@@ -62,8 +62,8 @@ nesting below is normative:
   },
   "stageA": {
     "designDays": [ {
-      key, alignmentKey, alignmentKeySource, alignmentKeyVersion,
-      name, sourceDesignDayName,
+      key, alignmentKey, alignmentKeySource, alignmentKeySourceFile,
+      alignmentKeyVersion, name, sourceDesignDayName,
       loadType, dayType, month, dayOfMonth, origin, location,               // §5.3
       representations: [ … ], parametric: { … }, series: [ … ]              // §6
     } ],
@@ -86,7 +86,7 @@ representation each side contributed is not interpretable.
 
 | Representation | Meaning | Who can supply it | Source |
 |---|---|---|---|
-| `ObservedHourly` | A 24-hour series the engine actually consumed, as authored in the model. Nothing is fitted or modelled. | TAS | TBD design days, via `SAM.Analytical.Tas.Query.DesignDays` |
+| `ObservedHourly` | A 24-hour series as authored, with nothing fitted or modelled. | **Either producer** from the SAM model; TAS additionally from its own store | SAM `DesignDay` (which derives from `Weather.WeatherDay`), or TBD design days via `SAM.Analytical.Tas.Query.DesignDays` |
 | `ProcessedParametric` | The parametric design-day definition the engine **accepted and echoed back**, after its own input processing. Not a series. | EnergyPlus | `eplusout.eio` — `Environment:Design Day Data` and `Environment:Design Day Misc` |
 | `DerivedHourly` | A 24-hour series **reconstructed** from a `ProcessedParametric` definition using the engine's documented design-day algorithms. | EnergyPlus | computed offline from the `.eio` parameters |
 
@@ -101,12 +101,32 @@ outdoor conditions, because the producer never requests them.
 The corresponding name for the whole exercise is an **"EnergyPlus processed design-day parameter audit
 with reconstructed hourly conditions"** — not an "hourly weather comparison".
 
+### An `ObservedHourly` series must declare where it was read
+
+`observedFrom` is required on every series of `basis: Observed`, and it decides which comparisons the
+series can support:
+
+| `observedFrom` | Read from | Carries translation? |
+|---|---|---|
+| `SamModel` | the SAM `DesignDay` in the loaded model | **No** — this is the authored profile, before any engine route |
+| `EngineStore` | the engine's own store, e.g. TBD design days | **Yes** — it has been through that route's translation (for TAS: SAM → gbXML → TBD) |
+
+This distinction matters because both producers load the same SAM model, so **either can emit a
+`SamModel` observed profile** — including the OpenStudio producer, alongside its own
+`ProcessedParametric` and `DerivedHourly`.
+
 ### Legitimate pairings
 
 | Comparison | Sides | What it establishes |
 |---|---|---|
-| **Collapse loss** | `ObservedHourly` → its own parametric summary, against `ProcessedParametric` | What the hourly → parametric translation discarded, on the OpenStudio side alone. Needs no reconstruction and is therefore the strongest evidence available. |
-| **Instantiated conditions** | `ObservedHourly` vs `DerivedHourly` | Whether the two engines sized from equivalent 24-hour conditions. Weaker: one side is reconstructed. |
+| **Collapse loss** | a `SamModel` `ObservedHourly` → its own parametric summary, against `ProcessedParametric` **in the same document** | What the hourly → parametric translation discarded, genuinely on the OpenStudio side alone. Needs no reconstruction and no cross-document pairing, and is therefore the strongest evidence available. |
+| **Instantiated conditions** | `ObservedHourly` vs `DerivedHourly`, across documents | Whether the two engines sized from equivalent 24-hour conditions. Weaker: one side is reconstructed. |
+| **Route translation** | a `SamModel` `ObservedHourly` vs an `EngineStore` `ObservedHourly` | What a route's own translation changed before the engine saw it — for TAS, what SAM → gbXML → TBD did. |
+
+**A TAS `EngineStore` profile is not a substitute for the authored one.** Comparing a TBD profile against
+EnergyPlus's echo folds any gbXML/TBD translation change into the result and would misattribute it to
+OpenStudio. That pairing is a **cross-route** comparison and must be labelled as such — it is the third
+row above, not collapse loss. Collapse loss requires the `SamModel` profile.
 
 A `ProcessedParametric` definition must never be compared hour-by-hour against an `ObservedHourly`
 series — they are not the same kind of object. Reconstruct first, and label the result.
@@ -184,6 +204,7 @@ cannot produce:
 | `quantity` | string | Quantity token for the series' own stage — [§6](#6-stage-a--conditions) for Stage A, [§7](#stage-b-quantity-tokens) for Stage B |
 | `unit` | string | Canonical unit token; present even when the series is unavailable, because the quantity is still declared |
 | `basis` | string or null | `Observed`, `Reconstructed` or `EngineReported`; **`null` if and only if `available` is `false`**. Never `EngineEchoed` — an echo is an input parameter, not a profile |
+| `observedFrom` | string or null | `SamModel` or `EngineStore`; required when `basis` is `Observed`, `null` otherwise ([§2](#an-observedhourly-series-must-declare-where-it-was-read)) |
 | `available` | boolean | `false` when the source cannot supply this quantity at all |
 | `values` | array or null | Exactly 24 finite numbers, hour 0 to hour 23 local standard time; `null` if and only if `available` is `false` |
 
@@ -195,7 +216,8 @@ Which basis a series carries follows from its stage:
 
 | Series | Basis |
 |---|---|
-| Stage A, TAS outdoor conditions from TBD | `Observed` |
+| Stage A, outdoor conditions read from the SAM model | `Observed`, `observedFrom: SamModel` |
+| Stage A, TAS outdoor conditions from TBD | `Observed`, `observedFrom: EngineStore` |
 | Stage A, EnergyPlus outdoor conditions reconstructed from `.eio` | `Reconstructed` |
 | Stage B, TAS zone response from TSD | `EngineReported` |
 
@@ -270,6 +292,7 @@ measurement:
 | `key` | string | Stable **within-document** key; the join target for Stage B. Not comparable across documents |
 | `alignmentKey` | string or null | **Cross-document** pairing key; see [§5.3.1](#531-cross-document-alignment) |
 | `alignmentKeySource` | string | `SamModel`, `DdyFile` or `None` — which common ancestor the key was derived from |
+| `alignmentKeySourceFile` | string or null | The `identity` of the `sourceFiles` entry that contributed the ancestor name; required when `alignmentKeySource` is `DdyFile`, `null` otherwise |
 | `alignmentKeyVersion` | string | Semantic version of the derivation rules below; required whenever `alignmentKey` is non-null |
 | `name` | string | Verbatim engine/model name, unmodified — e.g. `London_TRY ANN HTG 100% CONDS DB` |
 | `sourceDesignDayName` | string or null | The common-ancestor design-day name the key was derived from; `null` when the day cannot be traced to one |
@@ -346,7 +369,12 @@ Pairing rules, all normative:
   | `alignmentKeySource` | Additional precondition on the two documents |
   |---|---|
   | `SamModel` | equal `provenance.model.canonicalModelHash`, and equal `canonicalizationVersion` — hashes from different canonicalizers are not comparable evidence |
-  | `DdyFile` | equal `Ddy` `sourceFiles` hash |
+  | `DdyFile` | equal hash on the **specific** `sourceFiles` entry each day names in `alignmentKeySourceFile` |
+
+  The `DdyFile` condition is per-day, not per-document, because one audit may draw design days from more
+  than one DDY file. Comparing whole `Ddy` hash *sets* would both pair unrelated days when any one hash
+  matched and reject valid pairs when the sets merely differed, so each day names the file it came from and
+  only that file's hash is compared.
 
   Without these, two audits of *different* models or *different* DDY files would pair unrelated days and
   every Stage A and Stage B comparison built on them would be invalid.
@@ -435,7 +463,7 @@ Numeric fields (`AuditValue`):
 |---|---|---|
 | `maximumDryBulb` | `degC` | |
 | `dailyDryBulbRange` | `deltaC` | A range of `0.00` means constant temperature for 24 hours |
-| `humidityConditionValue` | `degC` or `kgWater/kgDryAir` | Unit follows `humidityConditionType`; the producer emits the unit that matches the echoed type |
+| `humidityConditionValue` | `degC`, `kgWater/kgDryAir` or `J/kg` | Unit follows `humidityConditionType` — `degC` for wet-bulb and dew-point forms, `kgWater/kgDryAir` for a humidity ratio, `J/kg` for `Enthalpy`. Unavailable for schedule-based types, which carry no single value |
 | `barometricPressure` | `Pa` | |
 | `windSpeed` | `m/s` | |
 | `windDirection` | `deg` | |
@@ -450,7 +478,16 @@ Token fields (`AuditToken`):
 |---|---|
 | `dryBulbRangeModifierType` | `DefaultMultipliers` |
 | `humidityConditionType` | `Dewpoint` |
+| `humidityConditionScheduleName` | the echoed schedule identity, for schedule-based humidity types |
 | `solarModel` | `ASHRAEClearSky` |
+
+`humidityConditionScheduleName` is available only for schedule-based humidity types
+(`RelativeHumiditySchedule`, `WetBulbProfileMultiplierSchedule` and similar). **v1 preserves the echoed
+schedule identity but does not reconstruct schedule-based humidity**: the humidity series in a
+`DerivedHourly` entry is then `available: false`, and `stageA.reconstruction.limitations` must record that
+the humidity profile was not reconstructed for that design day. The parametric echo is never discarded —
+recording the identity and declaring the reconstruction unavailable is preferable to fitting a profile the
+engine did not use.
 
 Flag fields (`AuditFlag`), all optional: `rainIndicator`, `snowIndicator`, `daylightSavingIndicator`.
 
@@ -650,7 +687,10 @@ A document is invalid if any of the following holds:
     - `alignmentKeySource` is absent, or disagrees with `origin` — `EmbeddedModel` requires `SamModel`,
       `Ddy` requires `DdyFile`, `Unknown` requires `None`;
     - `alignmentKeySource` is `None` while `alignmentKey` is non-null, or is `SamModel`/`DdyFile` while
-      `alignmentKey` is `null`.
+      `alignmentKey` is `null`;
+    - `alignmentKeySource` is `DdyFile` and `alignmentKeySourceFile` is absent, names no `sourceFiles`
+      entry, or names one whose `role` is not `Ddy`; or `alignmentKeySource` is not `DdyFile` and
+      `alignmentKeySourceFile` is non-null.
 11. `reportedLoadBasis`, `pressureBasis`, `elevationAuthority` or `factorSource` is missing. `Unknown` is
     a valid value; omission is not.
 12. A hash is not `sha256:` plus 64 lowercase hexadecimal characters.
@@ -664,8 +704,9 @@ A document is invalid if any of the following holds:
     target, so a duplicate would let one `designDayKey` resolve to several days and leave a response
     attributable to no single set of conditions.
 18. `representations` disagrees with the payload actually emitted:
-    - `ProcessedParametric` is declared without a `parametric` block, or a `parametric` block exists
-      without the declaration;
+    - `ProcessedParametric` is declared without a `parametric` block, or with a block in which **no**
+      value, token or flag is available — an all-unavailable block advertises evidence the engine never
+      echoed — or a `parametric` block exists without the declaration;
     - `ObservedHourly` is declared without at least one available series of `basis: Observed`, or such a
       series exists without the declaration;
     - `DerivedHourly` is declared without at least one available series of `basis: Reconstructed`, or
@@ -674,13 +715,15 @@ A document is invalid if any of the following holds:
 19. A `stageB` record has a `null` `guid` **and** a missing or empty `name`, leaving it unidentifiable.
 20. A root property other than `auditSchemaVersion`, `provenance`, `stageA`, `stageB` is required by a
     producer for correct interpretation, or `stageA`/`stageB` is nested inside the other.
-21. Two series in the same `designDay.series` or `space.series` array share a `quantity`. One series per
+21. `observedFrom` is absent on a series whose `basis` is `Observed`, is non-null on any other series, or
+    is a token other than `SamModel` or `EngineStore`.
+22. Two series in the same `designDay.series` or `space.series` array share a `quantity`. One series per
     quantity is what makes that sort key total, and two competing profiles for one quantity leave a
     consumer with no defined choice between them.
-22. A field this contract types as `AuditValue`, `AuditToken`, `AuditFlag` or `HourlySeries` is serialized
+23. A field this contract types as `AuditValue`, `AuditToken`, `AuditFlag` or `HourlySeries` is serialized
     as a bare JSON number, string, boolean or array instead of the wrapper — it would carry no `available`
     and no `basis`, so absence and provenance would both be implicit.
-23. Two `stageB.spaces` records share the same **effective space identity** for one design day and load
+24. Two `stageB.spaces` records share the same **effective space identity** for one design day and load
     type — that is, the same `(guid, designDayKey, loadType)` when `guid` is non-null, or the same
     `(name, designDayKey, loadType)` when it is `null`. Uniqueness follows the GUID-first identity rule,
     not the sort key: two records with one GUID and two different names would satisfy a
@@ -695,8 +738,8 @@ give every shape one availability discipline: unavailable means `value`/`values`
 `null`, and no type rule fires on a `null`. Rule 10 makes the cross-document pairing key self-checking,
 so a producer cannot hand-write a key that its own declared rules would not produce. Rule 13 makes
 non-determinism a contract error rather than something a reader discovers from a noisy diff. Rule 16
-makes a `Calculated` value unable to contradict the values it was derived from. Rules 17, 21 and 23 supply
-the uniqueness the "already total" sort keys depend on, and rule 22 stops a producer dropping the wrapper
+makes a `Calculated` value unable to contradict the values it was derived from. Rules 17, 22 and 24 supply
+the uniqueness the "already total" sort keys depend on, and rule 23 stops a producer dropping the wrapper
 shapes altogether. **Rule 18 is what makes
 "declared, never inferred" enforceable** — without it a producer could declare `ObservedHourly` while
 emitting reconstructed series, and the contract's central discipline would rest on good intentions.
