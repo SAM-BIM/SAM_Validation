@@ -32,6 +32,49 @@ narrated.
   sizing-period weather is **out of scope for v1** — it would change converter output and require a new
   simulation to serve the audit.
 
+### Top-level document
+
+`design-day-audit-<engine>.json` has four root properties. Field-level rules are not enough on their own
+— two producers could satisfy every one of them and still emit structurally incompatible JSON — so the
+nesting below is normative:
+
+| Root property | Type | Requirement |
+|---|---|---|
+| `auditSchemaVersion` | string | Required semantic version, independent of `schemaVersion` in the benchmark contract; v1 is `1.0.0` |
+| `provenance` | object | Required; [§5](#5-provenance) |
+| `stageA` | object | Required; `designDays` array plus optional `reconstruction` ([§6](#6-stage-a--conditions)) |
+| `stageB` | object | Required; `spaces` array ([§7](#7-stage-b--sizing-response)) |
+
+```text
+{
+  "auditSchemaVersion": "1.0.0",
+  "provenance": {
+    "sourceFiles":   [ { role, identity, hash } ],            // §5.1
+    "assemblies":    [ { name, hash, fileVersion, informationalVersion } ], // §5.2
+    "site":          { … elevations and pressure … },          // §5.4
+    "sizingFactors": { … factors and reportedLoadBasis … },     // §5.5
+    "engine":        { kind, name, version, sdkVersion },       // §5.6
+    "route": …, "samCommit": …, "runnerCommit": …,
+    "runTimestampUtc": …, "durationSeconds": …, "state": …,
+    "warnings": [ … ], "notes": [ … ]
+  },
+  "stageA": {
+    "designDays": [ {
+      key, alignmentKey, alignmentKeyVersion, name, sourceDesignDayName,
+      loadType, dayType, month, dayOfMonth, origin, location,               // §5.3
+      representations: [ … ], parametric: { … }, series: [ … ]              // §6
+    } ],
+    "reconstruction": { algorithm, algorithmVersion, inputs, limitations }   // §6
+  },
+  "stageB": {
+    "spaces": [ { guid, name, designDayKey, loadType, …, series: [ … ] } ]   // §7
+  }
+}
+```
+
+`stageA` and `stageB` are siblings and never nest inside one another. Unknown root or object properties
+do not change the meaning of known ones, and a writer must not emit non-finite JSON numbers.
+
 ## 2. The three representations
 
 Every quantity in a design-day audit belongs to exactly one of three representations. These are
@@ -208,7 +251,11 @@ with **Budapest** annual weather, and a document that stored one shared site wou
 | `name` | string or null | Location label as carried by the design day |
 | `latitude`, `longitude` | number or null | Degrees; positive north and east |
 | `timeZone` | number or null | Hours offset from UTC |
-| `elevation` | object | See [§5.4](#54-elevations) |
+| `elevation` | `AuditValue` | The elevation carried by **this design day**, `m` |
+
+The model-versus-weather-file elevation comparison is a property of the run, not of one design day, so it
+lives once at `provenance.site` ([§5.4](#54-site-elevations-and-pressure)) rather than being repeated on
+every day.
 
 #### 5.3.1 Cross-document alignment
 
@@ -248,11 +295,11 @@ Pairing rules, all normative:
   wrong day.
 - An unpaired or ambiguous day is a **coverage** observation, never a numerical difference.
 
-### 5.4 Elevations
+### 5.4 Site elevations and pressure
 
-Elevation is first-class, because site elevation feeds the design-day standard barometric pressure, and
-the recorded runs carry an EnergyPlus warning of `Elevation difference=[416.00] percent, [104.00]
-meters` between model and weather file:
+`provenance.site`, recorded once per document. Elevation is first-class, because site elevation feeds the
+design-day standard barometric pressure, and the recorded runs carry an EnergyPlus warning of
+`Elevation difference=[416.00] percent, [104.00] meters` between model and weather file:
 
 | Field | Type | Meaning |
 |---|---|---|
@@ -390,14 +437,16 @@ Space identity and alignment follow
 fallback.
 
 `stageB.spaces` is an array sorted by the **total** key `(guid, name, designDayKey, loadType)`, every
-component ordinal, with `null` `designDayKey` sorting **last**. One space produces a separate record per
-design day and load type, so GUID and name alone leave ties, and tied records would serialize in
-producer-enumeration order — which is not deterministic and would break artefact diffing. The lesson is
-already paid for in this programme: **never claim deterministic ordering from a non-total comparator**.
+component ordinal, with `null` sorting **last** in any component that permits it. One space produces a
+separate record per design day and load type, so GUID and name alone leave ties, and tied records would
+serialize in producer-enumeration order — which is not deterministic and would break artefact diffing.
+The lesson is already paid for in this programme: **never claim deterministic ordering from a non-total
+comparator**.
 
 | Field | Type | Unit | Meaning |
 |---|---|---|---|
-| `guid`, `name` | string | — | Space identity |
+| `guid` | string or null | — | SAM space GUID; `null` when the route could not preserve it, which shared-gbXML translation may legitimately do |
+| `name` | string | — | Space name; required and non-empty, and the only identity left when `guid` is `null` |
 | `designDayKey` | string or null | — | The Stage A day that drove this result; `null` when the engine does not attribute it |
 | `loadType` | string | — | `Heating` or `Cooling` |
 | `designLoad` | `AuditValue` | `W` | Sizing load, on the basis declared by `reportedLoadBasis` |
@@ -480,8 +529,28 @@ diffable:
 - Full finite `double` precision; no rounding of recorded values.
 - No non-finite JSON numbers.
 - LF endings, UTF-8 without BOM.
-- Every array declares its sort key in this document; no array order is incidental.
 - Committed artefacts are LF-pinned under `docs/benchmark/reports/**` in `.gitattributes`.
+
+### Array ordering
+
+No array order is incidental. Every array in the contract has a **total** sort key, so two conforming
+producers given equivalent evidence emit byte-identical output:
+
+| Array | Total sort key |
+|---|---|
+| `provenance.sourceFiles` | `(role, identity, hash)`, ordinal |
+| `provenance.assemblies` | `(name, hash)`, ordinal |
+| `provenance.warnings`, `provenance.notes` | ordinal string comparison |
+| `stageA.designDays` | `key`, ordinal — unique, so already total |
+| `designDay.representations` | ordinal string comparison of the representation tokens |
+| `designDay.series`, `space.series` | `quantity`, ordinal — one series per quantity, so already total |
+| `stageA.reconstruction.inputs` | ordinal string comparison |
+| `stageA.reconstruction.limitations` | ordinal string comparison |
+| `stageB.spaces` | `(guid, name, designDayKey, loadType)`, ordinal, `null` last |
+
+Ordinal means `StringComparer.Ordinal` — not culture-aware comparison, which would make output depend on
+the machine's locale. Where a key is described as "already total", that is because the contract forbids
+duplicates on it; a producer must not rely on that without enforcing the corresponding validation rule.
 
 ## 9. Validation rules
 
@@ -512,9 +581,22 @@ A document is invalid if any of the following holds:
 14. `stageA` and `stageB` content is interleaved in one object.
 15. `origin` is `Ddy` and no `sourceFiles` entry carries the `Ddy` role.
 16. A `Calculated` value does not equal the arithmetic its definition states over its operands, or is
-    `available: true` while any operand is `available: false`. For `elevation.absoluteDifference` the
-    operands are `modelSiteElevation` and `weatherFileElevation`, and the arithmetic is the absolute
-    difference.
+    `available: true` while any operand is `available: false`. For `site.absoluteDifference` the operands
+    are `modelSiteElevation` and `weatherFileElevation`, and the arithmetic is the absolute difference.
+17. Two entries in `stageA.designDays` share a `key`. Unlike `alignmentKey`, `key` is the Stage B join
+    target, so a duplicate would let one `designDayKey` resolve to several days and leave a response
+    attributable to no single set of conditions.
+18. `representations` disagrees with the payload actually emitted:
+    - `ProcessedParametric` is declared without a `parametric` block, or a `parametric` block exists
+      without the declaration;
+    - `ObservedHourly` is declared without at least one available series of `basis: Observed`, or such a
+      series exists without the declaration;
+    - `DerivedHourly` is declared without at least one available series of `basis: Reconstructed`, or
+      such a series exists without the declaration;
+    - `representations` is empty, or names a token other than these three.
+19. A `stageB` record has a `null` `guid` **and** a missing or empty `name`, leaving it unidentifiable.
+20. A root property other than `auditSchemaVersion`, `provenance`, `stageA`, `stageB` is required by a
+    producer for correct interpretation, or `stageA`/`stageB` is nested inside the other.
 
 Rules 2, 5, 6, 7, 8 and 11 exist to make the central failure mode — an unlabelled, mistyped or
 over-claimed value — a validation error rather than a reporting judgement. Rules 1, 2, 3 and 6 together
@@ -522,7 +604,9 @@ give every shape one availability discipline: unavailable means `value`/`values`
 `null`, and no type rule fires on a `null`. Rule 10 makes the cross-document pairing key self-checking,
 so a producer cannot hand-write a key that its own declared rules would not produce. Rule 13 makes
 non-determinism a contract error rather than something a reader discovers from a noisy diff. Rule 16
-makes a `Calculated` value unable to contradict the values it was derived from.
+makes a `Calculated` value unable to contradict the values it was derived from. **Rule 18 is what makes
+"declared, never inferred" enforceable** — without it a producer could declare `ObservedHourly` while
+emitting reconstructed series, and the contract's central discipline would rest on good intentions.
 
 A duplicated `alignmentKey` is deliberately **not** an error: it is a legitimate model condition, handled
 by excluding the whole group from pairing ([§5.3.1](#531-cross-document-alignment)) and reporting it as
