@@ -1,5 +1,9 @@
 # Benchmark glossary
 
+## Alignment key
+
+The cross-document identity that pairs one engine's design day with another's, derived from the shared SAM source design day rather than from either engine's own label. Its derivation rules are versioned, so a changed normalisation cannot masquerade as a changed design day. A day that cannot be traced to a SAM source day has no alignment key and is reported one-sided rather than guessed into a pair. See [DESIGN-DAY-AUDIT.md](DESIGN-DAY-AUDIT.md).
+
 ## Canonicalization
 
 The deterministic process that converts a SAM model into the representation hashed by `canonicalModelHash`. Its rules are identified by `canonicalizationVersion` so a changed algorithm cannot masquerade as a changed model.

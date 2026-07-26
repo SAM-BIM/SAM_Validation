@@ -108,6 +108,11 @@ A separate type from `MetricValue` is deliberate: it keeps audit evidence struct
 entering the gating comparator, and it forces the basis to be stated on every number rather than
 implied by which file it came from.
 
+`AuditValue` holds numbers only. Two sibling shapes carry non-numeric evidence with the same
+`available`/`basis` discipline but **no `unit`** — `AuditToken` (a string enumeration token) and
+`AuditFlag` (a boolean indicator). They are defined and enumerated in
+[§6](#6-stage-a--conditions), and are compared for exact ordinal equality only, never banded.
+
 `HourlySeries` carries a 24-hour profile. The basis is declared once for the series, because a
 reconstruction is uniformly reconstructed — per-hour bases would suggest a mixture the algorithms
 cannot produce:
@@ -168,8 +173,11 @@ measurement:
 
 | Field | Type | Meaning |
 |---|---|---|
-| `key` | string | Stable within-document key; the join target for Stage B |
+| `key` | string | Stable **within-document** key; the join target for Stage B. Not comparable across documents |
+| `alignmentKey` | string or null | **Cross-document** pairing key; see [§5.3.1](#531-cross-document-alignment) |
+| `alignmentKeyVersion` | string | Semantic version of the derivation rules below; required whenever `alignmentKey` is non-null |
 | `name` | string | Verbatim engine/model name, unmodified — e.g. `London_TRY ANN HTG 100% CONDS DB` |
+| `sourceDesignDayName` | string or null | The SAM source design-day name the key was derived from; `null` when the day cannot be traced to one |
 | `loadType` | string | `Heating` or `Cooling` |
 | `dayType` | string or null | Engine day-type token, e.g. `WinterDesignDay` |
 | `month`, `dayOfMonth` | number or null | Calendar position when declared |
@@ -186,6 +194,44 @@ with **Budapest** annual weather, and a document that stored one shared site wou
 | `latitude`, `longitude` | number or null | Degrees; positive north and east |
 | `timeZone` | number or null | Hours offset from UTC |
 | `elevation` | object | See [§5.4](#54-elevations) |
+
+#### 5.3.1 Cross-document alignment
+
+`key` is stable only within one document, and `name` is deliberately the **unmodified engine label** — so
+neither can pair a TAS day with an EnergyPlus day. Without a defined cross-document identity, both
+Stage A comparisons and the Stage B interpretation that rests on them would be ambiguous. `alignmentKey`
+supplies it.
+
+**The common ancestor is the SAM model.** SAM `DesignDay` derives from `Weather.WeatherDay` and carries
+**no GUID**, so the key is derived from its stable attributes rather than an identifier:
+
+```text
+alignmentKey = "<LoadType>|<NormalisedSourceName>"
+```
+
+where `LoadType` is `Heating` or `Cooling`, and `NormalisedSourceName` is `sourceDesignDayName`:
+
+1. trimmed of leading and trailing white space;
+2. every internal run of white space collapsed to one space (U+0020);
+3. upper-cased with `ToUpperInvariant`.
+
+Both producers must derive the key from the **SAM source design day**, never from a name the engine
+assigned or rewrote. `alignmentKeyVersion` is `1.0.0` for these rules; a changed normalisation requires a
+new version, so an algorithm change can never masquerade as a changed design day — the same discipline
+`canonicalizationVersion` applies to model hashes.
+
+Pairing rules, all normative:
+
+- The comparator pairs **only** on exactly equal `alignmentKey`. There is no fuzzy, positional or
+  nearest-name fallback.
+- `alignmentKey` is `null` when the day cannot be traced to a SAM source day — which is the expected case
+  for `origin` of `Ddy` or `Unknown`. A null-keyed day is **not pairable**: it is reported one-sided and
+  never guessed into a pair.
+- If two days in one document share an `alignmentKey`, **every** member of that group is excluded from
+  pairing and reported as ambiguous. This mirrors the duplicate-GUID rule for space alignment in
+  [METHODOLOGY.md](METHODOLOGY.md#space-identity-and-alignment) — first-match would silently pair the
+  wrong day.
+- An unpaired or ambiguous day is a **coverage** observation, never a numerical difference.
 
 ### 5.4 Elevations
 
@@ -217,8 +263,8 @@ unknown:
 
 | Field | Type | Meaning |
 |---|---|---|
-| `heatingSizingFactor` | `AuditValue` | Dimensionless factor the engine applied, `ratio` |
-| `coolingSizingFactor` | `AuditValue` | Dimensionless factor the engine applied, `ratio` |
+| `heatingSizingFactor` | `AuditValue` | Factor the engine applied, unit `dimensionless` |
+| `coolingSizingFactor` | `AuditValue` | Factor the engine applied, unit `dimensionless` |
 | `factorSource` | string | `EngineEcho`, `ModelSetting` or `Unknown` |
 | `reportedLoadBasis` | string | `PreSizingFactor`, `PostSizingFactor` or `Unknown` |
 
@@ -242,24 +288,49 @@ evaluating equivalent conditions.
 ([§5.3](#53-design-day-identity-and-location)), a declared `representations` array, and whichever of
 the two payloads it can supply.
 
-`parametric` is present when the entry offers `ProcessedParametric`. Every field is an `AuditValue`
-with `basis: EngineEchoed`:
+`parametric` is present when the entry offers `ProcessedParametric`. Every field carries
+`basis: EngineEchoed`, but **not every field is numeric**, so the block uses three shapes. All three
+share the `available`/`basis` discipline of [§4](#4-auditvalue-and-hourlyseries); they differ only in the
+type of `value`:
+
+| Shape | `value` type | `unit` | Used for |
+|---|---|---|---|
+| `AuditValue` | number or null | required | measured quantities |
+| `AuditToken` | string or null | **absent** | engine enumeration tokens |
+| `AuditFlag` | boolean or null | **absent** | engine indicator flags |
+
+`AuditToken` and `AuditFlag` carry no `unit`, because a token has no unit and a fabricated one would
+invite meaningless comparison. Their values are compared for **exact ordinal equality** only, never
+banded.
+
+Numeric fields (`AuditValue`):
 
 | Field | Unit | Notes |
 |---|---|---|
 | `maximumDryBulb` | `degC` | |
 | `dailyDryBulbRange` | `deltaC` | A range of `0.00` means constant temperature for 24 hours |
-| `dryBulbRangeModifierType` | — | String, e.g. `DefaultMultipliers` |
-| `humidityConditionType` | — | String, e.g. `Dewpoint` |
-| `humidityConditionValue` | `degC` or `kgWater/kgDryAir` | Unit follows the condition type |
+| `humidityConditionValue` | `degC` or `kgWater/kgDryAir` | Unit follows `humidityConditionType`; the producer emits the unit that matches the echoed type |
 | `barometricPressure` | `Pa` | |
 | `windSpeed` | `m/s` | |
 | `windDirection` | `deg` | |
-| `solarModel` | — | String, e.g. `ASHRAEClearSky` |
-| `skyClearness` | `ratio` | A clearness of `0.00` means zero solar for 24 hours |
-| `ashraeTauB`, `ashraeTauD` | `ratio` | Optional; present for `ASHRAETau` models |
-| `ashraeCoefficientA`, `ashraeCoefficientB`, `ashraeCoefficientC` | — | Optional; echoed clear-sky coefficients |
-| `rainIndicator`, `snowIndicator`, `daylightSavingIndicator` | — | Optional booleans |
+| `skyClearness` | `dimensionless` | A clearness of `0.00` means zero solar for 24 hours |
+| `ashraeTauB`, `ashraeTauD` | `dimensionless` | Optional; present for `ASHRAETau` models |
+| `ashraeCoefficientA` | `W/m2` | Optional; apparent solar irradiation at air mass zero |
+| `ashraeCoefficientB`, `ashraeCoefficientC` | `dimensionless` | Optional; echoed extinction and diffuse factors |
+
+Token fields (`AuditToken`):
+
+| Field | Example |
+|---|---|
+| `dryBulbRangeModifierType` | `DefaultMultipliers` |
+| `humidityConditionType` | `Dewpoint` |
+| `solarModel` | `ASHRAEClearSky` |
+
+Flag fields (`AuditFlag`), all optional: `rainIndicator`, `snowIndicator`, `daylightSavingIndicator`.
+
+`dimensionless` is a canonical unit token in this contract, used where a quantity is a genuine ratio. It
+is never omitted and never left empty — an absent unit on an `AuditValue` is a validation error
+([§9](#9-validation-rules)).
 
 `series` is present when the entry offers `ObservedHourly` or `DerivedHourly`: an array of
 `HourlySeries` ([§4](#4-auditvalue-and-hourlyseries)), sorted by `quantity`, drawn from these quantity
@@ -298,9 +369,15 @@ decide whether a difference is physics or reconstruction error.
 
 ## 7. Stage B — sizing response
 
-`stageB.spaces` is an array sorted by space GUID then ordinal name. Space identity and alignment follow
+Space identity and alignment follow
 [METHODOLOGY.md](METHODOLOGY.md#space-identity-and-alignment) — GUID first, name only as a declared
 fallback.
+
+`stageB.spaces` is an array sorted by the **total** key `(guid, name, designDayKey, loadType)`, every
+component ordinal, with `null` `designDayKey` sorting **last**. One space produces a separate record per
+design day and load type, so GUID and name alone leave ties, and tied records would serialize in
+producer-enumeration order — which is not deterministic and would break artefact diffing. The lesson is
+already paid for in this programme: **never claim deterministic ordering from a non-total comparator**.
 
 | Field | Type | Unit | Meaning |
 |---|---|---|---|
@@ -317,10 +394,27 @@ fallback.
 | `zoneHumidityRatioAtPeak` | `AuditValue` | `kgWater/kgDryAir` | Optional |
 | `conditioned` | boolean or null | — | Engine's classification; `null` when not exposed |
 | `setpointState` | string or null | — | Engine's setpoint/thermostat state at peak, verbatim |
-| `series` | array or null | — | Optional `HourlySeries` per space: `zoneSensibleLoad` (`W`), `zoneTemperature` (`degC`) |
+| `series` | array or null | — | Optional `HourlySeries` per space, drawn from the Stage B quantity tokens below |
 
 `peakHour` is an hour **of the design day**, deliberately a different unit token from the benchmark's
 `hourOfYear`, so the two can never be silently compared.
+
+### Stage B quantity tokens
+
+`HourlySeries.quantity` is drawn from a **stage-specific** token list. Stage A quantities describe
+outdoor conditions ([§6](#6-stage-a--conditions)); Stage B quantities describe the zone response, and a
+Stage A series may never use a Stage B token or the reverse:
+
+| Quantity | Unit |
+|---|---|
+| `zoneSensibleLoad` | `W` |
+| `zoneLatentLoad` | `W` |
+| `zoneTemperature` | `degC` |
+| `zoneHumidityRatio` | `kgWater/kgDryAir` |
+| `zoneSetpointTemperature` | `degC` |
+
+`zoneLatentLoad`, `zoneHumidityRatio` and `zoneSetpointTemperature` are optional; a producer that cannot
+supply one emits `available: false` rather than omitting the entry silently or zero-filling it.
 
 ### The two sides are asymmetric, and that is recorded not hidden
 
@@ -381,17 +475,33 @@ A document is invalid if any of the following holds:
 2. `available` is `true` and `basis` is `null`, or `available` is `false` and `basis` is non-null.
 3. A `HourlySeries` has `values` whose length is not exactly 24, or is `available: true` with `null`
    values.
-4. A quantity or unit token is absent, or is not in this document.
-5. A series carries `basis: EngineEchoed`.
-6. A `Reconstructed` series exists without `stageA.reconstruction`.
-7. A `stageB` space names a `designDayKey` absent from `stageA.designDays`.
-8. `reportedLoadBasis`, `pressureBasis`, `elevationAuthority` or `factorSource` is missing. `Unknown` is
-   a valid value; omission is not.
-9. A hash is not `sha256:` plus 64 lowercase hexadecimal characters.
-10. `stageA` and `stageB` content is interleaved in one object.
+4. A `HourlySeries` `quantity` token is absent, or is not in the token list **for its own stage** —
+   Stage A quantities in Stage A, Stage B quantities in Stage B, never crossed.
+5. An `AuditValue` has no `unit`, or its `unit` is not a token named in this document. An `AuditToken` or
+   `AuditFlag` carries a `unit` at all.
+6. An `AuditToken` value is not a string, or an `AuditFlag` value is not a boolean, or an `AuditValue`
+   value is not a finite number.
+7. A series carries `basis: EngineEchoed`.
+8. A `Reconstructed` series exists without `stageA.reconstruction`.
+9. A `stageB` record names a `designDayKey` absent from `stageA.designDays`.
+10. `alignmentKey` is non-null and `alignmentKeyVersion` is absent, or `alignmentKey` is non-null while
+    `sourceDesignDayName` is `null`, or `alignmentKey` does not equal the value the declared
+    `alignmentKeyVersion` rules produce from `loadType` and `sourceDesignDayName`.
+11. `reportedLoadBasis`, `pressureBasis`, `elevationAuthority` or `factorSource` is missing. `Unknown` is
+    a valid value; omission is not.
+12. A hash is not `sha256:` plus 64 lowercase hexadecimal characters.
+13. An array is not ordered by the total sort key this document declares for it.
+14. `stageA` and `stageB` content is interleaved in one object.
 
-Rules 2, 5, 6 and 8 exist to make the central failure mode — an unlabelled or over-claimed value —
-a validation error rather than a reporting judgement.
+Rules 2, 5, 6, 7, 8 and 11 exist to make the central failure mode — an unlabelled, mistyped or
+over-claimed value — a validation error rather than a reporting judgement. Rule 10 makes the
+cross-document pairing key self-checking, so a producer cannot hand-write a key that its own declared
+rules would not produce. Rule 13 makes non-determinism a contract error rather than something a reader
+discovers from a noisy diff.
+
+A duplicated `alignmentKey` is deliberately **not** an error: it is a legitimate model condition, handled
+by excluding the whole group from pairing ([§5.3.1](#531-cross-document-alignment)) and reporting it as
+ambiguous.
 
 ## 10. Deliberately excluded from v1
 
@@ -422,8 +532,13 @@ These need a decision before implementation, and are the reason this document is
    own `docs/benchmark/design-day-audit/` tree?
 5. **Does `ObservedHourly` need a parametric summary field**, so collapse loss can be computed without
    the comparator re-deriving max/range/mean from the series each time?
+6. **Is `loadType` + normalised name a strong enough `alignmentKey`?** SAM `DesignDay` has no GUID, so
+   the key rests on the name. Adding `month` and `dayOfMonth` would harden it against two same-named
+   days, at the cost of failing to pair when one route drops the calendar position. The recorded
+   fixture does not exercise the collision — its days are distinctly named — so this is a judgement
+   about models not yet seen.
 
 ## 12. Glossary additions
 
-Terms added to [GLOSSARY.md](GLOSSARY.md) by this contract: *Observed hourly*, *Processed parametric*,
-*Derived hourly*, *Value basis*, *Collapse loss*, *Reported load basis*.
+Terms added to [GLOSSARY.md](GLOSSARY.md) by this contract: *Alignment key*, *Collapse loss*,
+*Derived hourly*, *Observed hourly*, *Processed parametric*, *Reported load basis*, *Value basis*.
