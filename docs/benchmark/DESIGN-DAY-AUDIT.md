@@ -50,6 +50,8 @@ nesting below is normative:
   "auditSchemaVersion": "1.0.0",
   "provenance": {
     "sourceFiles":   [ { role, identity, hash } ],            // §5.1
+    "model":         { sourceModelName, sourceModelGuid,
+                       canonicalModelHash, canonicalizationVersion },       // §5.1
     "assemblies":    [ { name, hash, fileVersion, informationalVersion } ], // §5.2
     "site":          { … elevations and pressure … },          // §5.4
     "sizingFactors": { … factors and reportedLoadBasis … },     // §5.5
@@ -167,9 +169,11 @@ entering the gating comparator, and it forces the basis to be stated on every nu
 implied by which file it came from.
 
 `AuditValue` holds numbers only. Two sibling shapes carry non-numeric evidence with the same
-`available`/`basis` discipline but **no `unit`** — `AuditToken` (a string enumeration token) and
-`AuditFlag` (a boolean indicator). They are defined and enumerated in
-[§6](#6-stage-a--conditions), and are compared for exact ordinal equality only, never banded.
+`available`/`basis` discipline but **no `unit`** — `AuditToken` (a string, whether an enumeration token or
+a verbatim engine label) and `AuditFlag` (a boolean indicator). Their field layout is set out in
+[§6](#6-stage-a--conditions); both stages use them, and both are compared for exact ordinal equality only,
+never banded. **No audit field is ever a bare JSON string, number or boolean** — every value in the
+document carries its own `available` and `basis`, so absence and provenance are never left implicit.
 
 `HourlySeries` carries a 24-hour profile. The basis is declared once for the series, because a
 reconstruction is uniformly reconstructed — per-hour bases would suggest a mixture the algorithms
@@ -221,6 +225,22 @@ it under its own role rather than conflating the two inputs.
 
 The model and weather entries must agree with the corresponding `benchmark-<engine>.json` hashes when
 the two documents describe the same run.
+
+`provenance.model` additionally carries the neutral model identity, so pairing can establish that two
+documents describe the **same model** and not merely the same file name:
+
+| Field | Type | Meaning |
+|---|---|---|
+| `sourceModelName` | string | Portable model label; not a filesystem path |
+| `sourceModelGuid` | string or null | SAM model GUID, 32 lowercase hexadecimal characters |
+| `canonicalModelHash` | string | `sha256:` of the canonical SAM representation |
+| `canonicalizationVersion` | string | Semantic version of the canonicalization rules used |
+
+These are the same two-hash semantics as the benchmark contract
+([SCHEMA.md](SCHEMA.md#canonical-model-hashing)): the `SourceModel` file hash proves byte equality of the
+input, while `canonicalModelHash` proves the two runs describe the same model ignoring non-semantic
+formatting. A producer computes them exactly as it does for `benchmark-<engine>.json`, so a paired audit
+and benchmark document for one run carry identical values.
 
 ### 5.2 Loaded assembly hashes
 
@@ -319,10 +339,17 @@ Pairing rules, all normative:
   nearest-name fallback.
 - Two days pair only when their `alignmentKeySource` values also agree. A `SamModel` key and a `DdyFile`
   key are not interchangeable even if the names coincide.
-- When `alignmentKeySource` is `DdyFile`, pairing **additionally requires the two documents' `Ddy`
-  `sourceFiles` hashes to be equal**. Two different DDY files can carry identically named days — ASHRAE
-  station names repeat — and without the hash condition the comparator would pair days from different
-  weather sources.
+- **Every pairing requires the shared ancestor itself to be provably shared**, because design-day names
+  are conventional and repeat freely across models and weather files — `London_TRY ANN HTG 100% CONDS DB`
+  is a CIBSE label, not a unique identifier. So the name match alone never authorises a pair:
+
+  | `alignmentKeySource` | Additional precondition on the two documents |
+  |---|---|
+  | `SamModel` | equal `provenance.model.canonicalModelHash`, and equal `canonicalizationVersion` — hashes from different canonicalizers are not comparable evidence |
+  | `DdyFile` | equal `Ddy` `sourceFiles` hash |
+
+  Without these, two audits of *different* models or *different* DDY files would pair unrelated days and
+  every Stage A and Stage B comparison built on them would be invalid.
 - `alignmentKey` is `null` only when the day has no traceable common ancestor, i.e. `origin` of
   `Unknown`. A null-keyed day is **not pairable**: it is reported one-sided and never guessed into a pair.
 - If two days in one document share an `alignmentKey`, **every** member of that group is excluded from
@@ -395,7 +422,7 @@ of `value`:
 | Shape | `value` type | `unit` | Used for |
 |---|---|---|---|
 | `AuditValue` | number or null | required | measured quantities |
-| `AuditToken` | string or null | **absent** | engine enumeration tokens |
+| `AuditToken` | string or null | **absent** | engine string values — an enumeration token, or a verbatim engine label such as a setpoint state |
 | `AuditFlag` | boolean or null | **absent** | engine indicator flags |
 
 `AuditToken` and `AuditFlag` carry no `unit`, because a token has no unit and a fabricated one would
@@ -493,8 +520,8 @@ comparator**.
 | `zoneTemperatureAtPeak` | `AuditValue` | `degC` | |
 | `outdoorTemperatureAtPeak` | `AuditValue` | `degC` | |
 | `zoneHumidityRatioAtPeak` | `AuditValue` | `kgWater/kgDryAir` | Optional |
-| `conditioned` | boolean or null | — | Engine's classification; `null` when not exposed |
-| `setpointState` | string or null | — | Engine's setpoint/thermostat state at peak, verbatim |
+| `conditioned` | `AuditFlag` | — | Engine's classification |
+| `setpointState` | `AuditToken` | — | Engine's setpoint/thermostat state at peak, verbatim |
 | `series` | array or null | — | Optional `HourlySeries` per space, drawn from the Stage B quantity tokens below |
 
 `peakHour` is an hour **of the design day**, deliberately a different unit token from the benchmark's
@@ -647,7 +674,13 @@ A document is invalid if any of the following holds:
 19. A `stageB` record has a `null` `guid` **and** a missing or empty `name`, leaving it unidentifiable.
 20. A root property other than `auditSchemaVersion`, `provenance`, `stageA`, `stageB` is required by a
     producer for correct interpretation, or `stageA`/`stageB` is nested inside the other.
-21. Two `stageB.spaces` records share the same **effective space identity** for one design day and load
+21. Two series in the same `designDay.series` or `space.series` array share a `quantity`. One series per
+    quantity is what makes that sort key total, and two competing profiles for one quantity leave a
+    consumer with no defined choice between them.
+22. A field this contract types as `AuditValue`, `AuditToken`, `AuditFlag` or `HourlySeries` is serialized
+    as a bare JSON number, string, boolean or array instead of the wrapper — it would carry no `available`
+    and no `basis`, so absence and provenance would both be implicit.
+23. Two `stageB.spaces` records share the same **effective space identity** for one design day and load
     type — that is, the same `(guid, designDayKey, loadType)` when `guid` is non-null, or the same
     `(name, designDayKey, loadType)` when it is `null`. Uniqueness follows the GUID-first identity rule,
     not the sort key: two records with one GUID and two different names would satisfy a
@@ -662,7 +695,9 @@ give every shape one availability discipline: unavailable means `value`/`values`
 `null`, and no type rule fires on a `null`. Rule 10 makes the cross-document pairing key self-checking,
 so a producer cannot hand-write a key that its own declared rules would not produce. Rule 13 makes
 non-determinism a contract error rather than something a reader discovers from a noisy diff. Rule 16
-makes a `Calculated` value unable to contradict the values it was derived from. **Rule 18 is what makes
+makes a `Calculated` value unable to contradict the values it was derived from. Rules 17, 21 and 23 supply
+the uniqueness the "already total" sort keys depend on, and rule 22 stops a producer dropping the wrapper
+shapes altogether. **Rule 18 is what makes
 "declared, never inferred" enforceable** — without it a producer could declare `ObservedHourly` while
 emitting reconstructed series, and the contract's central discipline would rest on good intentions.
 
