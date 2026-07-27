@@ -1,5 +1,9 @@
 # Benchmark glossary
 
+## Alignment key
+
+The cross-document identity that pairs one engine's design day with another's, derived from the ancestor the two routes share — the SAM source design day, or a shared DDY file — rather than from either engine's own label. The document declares which ancestor was used, and a DDY-derived pairing additionally requires the two DDY file hashes to match, since station names repeat across weather files. Its derivation rules are versioned, so a changed normalisation cannot masquerade as a changed design day. A day with no traceable ancestor has no alignment key and is reported one-sided rather than guessed into a pair. See [DESIGN-DAY-AUDIT.md](DESIGN-DAY-AUDIT.md).
+
 ## Canonicalization
 
 The deterministic process that converts a SAM model into the representation hashed by `canonicalModelHash`. Its rules are identified by `canonicalizationVersion` so a changed algorithm cannot masquerade as a changed model.
@@ -8,9 +12,17 @@ The deterministic process that converts a SAM model into the representation hash
 
 The unit required by the benchmark contract for a metric. Producers convert values at emission time and include the unit token on every metric; consumers never infer a unit from a field name.
 
+## Collapse loss
+
+What an hourly → parametric design-day translation discards. Measured on one engine's side alone, by summarising an `ObservedHourly` series into parametric terms and comparing that against the `ProcessedParametric` definition the engine echoed. It needs no reconstruction, so it is the strongest design-day evidence available. See [DESIGN-DAY-AUDIT.md](DESIGN-DAY-AUDIT.md).
+
 ## Conditioning pairing
 
 The two engine configurations intended to represent comparable space conditioning. The B0 candidate is OpenStudio Ideal Loads versus Tas thermostats, IZAMs, and TBD sizing. It remains provisional until the B2 `SingleBox` checkpoint and energy-modeller review.
+
+## Derived hourly
+
+A 24-hour design-day series **reconstructed** by a producer from an engine's `ProcessedParametric` definition using that engine's documented design-day algorithms. It is never the engine's own output, and describing one as "reported by" the engine is prohibited. Requires a declared algorithm and version. See [DESIGN-DAY-AUDIT.md](DESIGN-DAY-AUDIT.md).
 
 ## Engine
 
@@ -24,9 +36,21 @@ The overall comparator outcome derived from contract validity, coverage diagnost
 
 Whether a producer obtained a real metric from its route. Available means `available: true` with a non-null value, including a measured zero. Unavailable means `available: false` with `value: null`.
 
+## Observed hourly
+
+A 24-hour design-day series an engine actually consumed, as authored in the model, with nothing fitted or modelled. In this programme TAS supplies it from TBD design days. See [DESIGN-DAY-AUDIT.md](DESIGN-DAY-AUDIT.md).
+
+## Processed parametric
+
+The parametric design-day definition an engine accepted and echoed back after its own input processing — maximum dry bulb, daily range, humidity condition, solar model and clearness, and so on. It is not a series, and must never be compared hour-by-hour against one. EnergyPlus supplies it from `eplusout.eio`. See [DESIGN-DAY-AUDIT.md](DESIGN-DAY-AUDIT.md).
+
 ## Provenance
 
 The evidence describing what was run and how: model and weather identities and hashes, canonicalization version, code revisions, engine versions, route, design-day source, run time, state, warnings, and notes.
+
+## Reported load basis
+
+Whether a sizing load a producer reports is stated before or after that engine's sizing factor (`PreSizingFactor`, `PostSizingFactor` or `Unknown`). It is settled per engine, by comparing a reported load against that engine's own unfactored result — never by comparing two engines with each other, because a cross-engine ratio cannot separate a sizing margin from a physical difference. See [DESIGN-DAY-AUDIT.md](DESIGN-DAY-AUDIT.md).
 
 ## Route
 
@@ -35,6 +59,10 @@ The complete model-translation and simulation path used to produce a benchmark d
 ## Tolerance band
 
 A configurable reporting classification based on the difference between two available, unit-compatible values. B0 defines provisional pass/warn/fail bands; it does not validate them as acceptance thresholds.
+
+## Value basis
+
+How an audited number came to exist, declared on every audit value: `Observed` (read as authored), `EngineEchoed` (the engine restating an input it accepted), `EngineReported` (a result the engine computed), `Reconstructed` (modelled by the producer from echoed inputs using a documented engine algorithm) or `Calculated` (plain arithmetic over values already in the same document). The echo/report distinction is the axis the design-day audit turns on — an echo says what the engine was asked to simulate, a report says what it produced. It is recorded independently of the representation the value sits in, so an over-claimed value is a validation error rather than a matter of wording. See [DESIGN-DAY-AUDIT.md](DESIGN-DAY-AUDIT.md).
 
 ## Whole-model reconciliation
 
