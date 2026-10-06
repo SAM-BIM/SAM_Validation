@@ -1,0 +1,1342 @@
+{
+  "summarySchemaVersion": "1.0.0",
+  "toleranceProfile": "default",
+  "toleranceProfileDetail": {
+    "name": "default",
+    "warnRelative": 0.05,
+    "failRelative": 0.15,
+    "hourWarnAbsolute": 1,
+    "hourFailAbsolute": 24,
+    "defaultNearZeroFloor": 0,
+    "nearZeroFloors": {
+      "kWh": 1,
+      "Wh": 1000,
+      "kW": 0.01,
+      "W": 10,
+      "m2": 0.01,
+      "m3": 0.01,
+      "h": 0.5
+    }
+  },
+  "gate": "Fail",
+  "statuses": {
+    "overall": "Fail",
+    "numerical": "Fail",
+    "coverage": "Warn",
+    "provenance": "Pass",
+    "reconciliation": "Warn"
+  },
+  "provenanceCompatibility": {
+    "compatible": true,
+    "mismatches": []
+  },
+  "counts": {
+    "match": 10,
+    "warn": 4,
+    "fail": 3,
+    "notApplicable": 31
+  },
+  "coverage": {
+    "status": "Warn",
+    "requiredMetricCount": 28,
+    "comparableMetricCount": 17,
+    "unavailableRequiredMetricCount": 11,
+    "unmatchedSpaceCount": 2,
+    "ambiguousSpaceCount": 0,
+    "duplicateSpaceIdentityCount": 0
+  },
+  "schema": {
+    "tas": "1.0.0",
+    "openStudio": "1.0.0",
+    "driftNote": null
+  },
+  "provenance": {
+    "tas": {
+      "sourceModelName": "SingleBox",
+      "sourceModelGuid": "0123456789abcdef0123456789abcdef",
+      "sourceFileHash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "canonicalModelHash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "canonicalizationVersion": "1.0.0",
+      "samCommit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "runnerCommit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "engine": {
+        "kind": "TAS",
+        "name": "TAS",
+        "version": "9.5.3",
+        "sdkVersion": null
+      },
+      "route": "Native-TAS",
+      "weather": {
+        "identity": "London-Gatwick.epw",
+        "hash": "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+      },
+      "designDaySource": "DDY",
+      "runTimestampUtc": "2026-07-21T12:00:00Z",
+      "durationSeconds": 12.5,
+      "state": "Success",
+      "resultSources": [
+        "AnalyticalModelSimulationResult",
+        "SpaceSimulationResult"
+      ],
+      "warnings": [],
+      "notes": []
+    },
+    "openStudio": {
+      "sourceModelName": "SingleBox",
+      "sourceModelGuid": "0123456789abcdef0123456789abcdef",
+      "sourceFileHash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "canonicalModelHash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "canonicalizationVersion": "1.0.0",
+      "samCommit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "runnerCommit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "engine": {
+        "kind": "OpenStudio",
+        "name": "EnergyPlus",
+        "version": "24.1.0",
+        "sdkVersion": "3.10.0"
+      },
+      "route": "Native-OpenStudio",
+      "weather": {
+        "identity": "London-Gatwick.epw",
+        "hash": "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+      },
+      "designDaySource": "DDY",
+      "runTimestampUtc": "2026-07-21T12:00:00Z",
+      "durationSeconds": 12.5,
+      "state": "Success",
+      "resultSources": [
+        "AnalyticalModelSimulationResult",
+        "SpaceSimulationResult"
+      ],
+      "warnings": [],
+      "notes": []
+    }
+  },
+  "modelMetrics": [
+    {
+      "scope": "model",
+      "key": "consumptionHeating",
+      "unit": "kWh",
+      "availability": "Both",
+      "band": "Match",
+      "informational": false,
+      "notApplicableReason": null,
+      "circular": false,
+      "tas": {
+        "value": 1000,
+        "available": true,
+        "unit": "kWh"
+      },
+      "openStudio": {
+        "value": 1000,
+        "available": true,
+        "unit": "kWh"
+      },
+      "absoluteDifference": 0,
+      "relativeDifference": 0,
+      "signedDifference": 0
+    },
+    {
+      "scope": "model",
+      "key": "consumptionCooling",
+      "unit": "kWh",
+      "availability": "TasOnly",
+      "band": "N/A",
+      "informational": false,
+      "notApplicableReason": "unavailable",
+      "circular": false,
+      "tas": {
+        "value": 500,
+        "available": true,
+        "unit": "kWh"
+      },
+      "openStudio": {
+        "value": null,
+        "available": false,
+        "unit": "kWh"
+      },
+      "absoluteDifference": null,
+      "relativeDifference": null,
+      "signedDifference": null
+    },
+    {
+      "scope": "model",
+      "key": "peakHeatingLoad",
+      "unit": "kW",
+      "availability": "Both",
+      "band": "Fail",
+      "informational": true,
+      "notApplicableReason": null,
+      "circular": false,
+      "tas": {
+        "value": 10,
+        "available": true,
+        "unit": "kW"
+      },
+      "openStudio": {
+        "value": 30,
+        "available": true,
+        "unit": "kW"
+      },
+      "absoluteDifference": 20,
+      "relativeDifference": 0.6666666666666666,
+      "signedDifference": 20
+    },
+    {
+      "scope": "model",
+      "key": "peakHeatingHour",
+      "unit": "hourOfYear",
+      "availability": "Both",
+      "band": "Warn",
+      "informational": true,
+      "notApplicableReason": null,
+      "circular": true,
+      "tas": {
+        "value": 200,
+        "available": true,
+        "unit": "hourOfYear"
+      },
+      "openStudio": {
+        "value": 205,
+        "available": true,
+        "unit": "hourOfYear"
+      },
+      "absoluteDifference": 5,
+      "relativeDifference": null,
+      "signedDifference": null
+    },
+    {
+      "scope": "model",
+      "key": "peakCoolingLoad",
+      "unit": "kW",
+      "availability": "Both",
+      "band": "Warn",
+      "informational": true,
+      "notApplicableReason": null,
+      "circular": false,
+      "tas": {
+        "value": 8,
+        "available": true,
+        "unit": "kW"
+      },
+      "openStudio": {
+        "value": 8.8,
+        "available": true,
+        "unit": "kW"
+      },
+      "absoluteDifference": 0.8000000000000007,
+      "relativeDifference": 0.09090909090909098,
+      "signedDifference": 0.8000000000000007
+    },
+    {
+      "scope": "model",
+      "key": "peakCoolingHour",
+      "unit": "hourOfYear",
+      "availability": "Both",
+      "band": "Match",
+      "informational": true,
+      "notApplicableReason": null,
+      "circular": true,
+      "tas": {
+        "value": 8759,
+        "available": true,
+        "unit": "hourOfYear"
+      },
+      "openStudio": {
+        "value": 0,
+        "available": true,
+        "unit": "hourOfYear"
+      },
+      "absoluteDifference": 1,
+      "relativeDifference": null,
+      "signedDifference": null
+    },
+    {
+      "scope": "model",
+      "key": "floorArea",
+      "unit": "m2",
+      "availability": "Both",
+      "band": "Match",
+      "informational": false,
+      "notApplicableReason": null,
+      "circular": false,
+      "tas": {
+        "value": 240,
+        "available": true,
+        "unit": "m2"
+      },
+      "openStudio": {
+        "value": 240,
+        "available": true,
+        "unit": "m2"
+      },
+      "absoluteDifference": 0,
+      "relativeDifference": 0,
+      "signedDifference": 0
+    },
+    {
+      "scope": "model",
+      "key": "volume",
+      "unit": "m3",
+      "availability": "Both",
+      "band": "Match",
+      "informational": false,
+      "notApplicableReason": null,
+      "circular": false,
+      "tas": {
+        "value": 720,
+        "available": true,
+        "unit": "m3"
+      },
+      "openStudio": {
+        "value": 720,
+        "available": true,
+        "unit": "m3"
+      },
+      "absoluteDifference": 0,
+      "relativeDifference": 0,
+      "signedDifference": 0
+    }
+  ],
+  "spaces": [
+    {
+      "scope": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "guid": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+      "tasName": "Office A",
+      "openStudioName": "Office A",
+      "matchKind": "Guid",
+      "metrics": [
+        {
+          "scope": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+          "key": "area",
+          "unit": "m2",
+          "availability": "Both",
+          "band": "Match",
+          "informational": false,
+          "notApplicableReason": null,
+          "circular": false,
+          "tas": {
+            "value": 200,
+            "available": true,
+            "unit": "m2"
+          },
+          "openStudio": {
+            "value": 200,
+            "available": true,
+            "unit": "m2"
+          },
+          "absoluteDifference": 0,
+          "relativeDifference": 0,
+          "signedDifference": 0
+        },
+        {
+          "scope": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+          "key": "volume",
+          "unit": "m3",
+          "availability": "Both",
+          "band": "Match",
+          "informational": false,
+          "notApplicableReason": null,
+          "circular": false,
+          "tas": {
+            "value": 600,
+            "available": true,
+            "unit": "m3"
+          },
+          "openStudio": {
+            "value": 600,
+            "available": true,
+            "unit": "m3"
+          },
+          "absoluteDifference": 0,
+          "relativeDifference": 0,
+          "signedDifference": 0
+        },
+        {
+          "scope": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+          "key": "heating.designLoad",
+          "unit": "W",
+          "availability": "Neither",
+          "band": "N/A",
+          "informational": false,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": null,
+            "available": false,
+            "unit": "W"
+          },
+          "openStudio": {
+            "value": null,
+            "available": false,
+            "unit": "W"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+          "key": "heating.peakLoad",
+          "unit": "W",
+          "availability": "Both",
+          "band": "Match",
+          "informational": false,
+          "notApplicableReason": null,
+          "circular": false,
+          "tas": {
+            "value": 2000,
+            "available": true,
+            "unit": "W"
+          },
+          "openStudio": {
+            "value": 2000,
+            "available": true,
+            "unit": "W"
+          },
+          "absoluteDifference": 0,
+          "relativeDifference": 0,
+          "signedDifference": 0
+        },
+        {
+          "scope": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+          "key": "heating.peakHour",
+          "unit": "hourOfYear",
+          "availability": "Both",
+          "band": "Match",
+          "informational": true,
+          "notApplicableReason": null,
+          "circular": true,
+          "tas": {
+            "value": 205,
+            "available": true,
+            "unit": "hourOfYear"
+          },
+          "openStudio": {
+            "value": 205,
+            "available": true,
+            "unit": "hourOfYear"
+          },
+          "absoluteDifference": 0,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+          "key": "heating.unmetHours",
+          "unit": "h",
+          "availability": "Both",
+          "band": "Match",
+          "informational": false,
+          "notApplicableReason": null,
+          "circular": false,
+          "tas": {
+            "value": 0,
+            "available": true,
+            "unit": "h"
+          },
+          "openStudio": {
+            "value": 0,
+            "available": true,
+            "unit": "h"
+          },
+          "absoluteDifference": 0,
+          "relativeDifference": 0,
+          "signedDifference": 0
+        },
+        {
+          "scope": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+          "key": "cooling.designLoad",
+          "unit": "W",
+          "availability": "Neither",
+          "band": "N/A",
+          "informational": false,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": null,
+            "available": false,
+            "unit": "W"
+          },
+          "openStudio": {
+            "value": null,
+            "available": false,
+            "unit": "W"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+          "key": "cooling.peakLoad",
+          "unit": "W",
+          "availability": "Neither",
+          "band": "N/A",
+          "informational": false,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": null,
+            "available": false,
+            "unit": "W"
+          },
+          "openStudio": {
+            "value": null,
+            "available": false,
+            "unit": "W"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+          "key": "cooling.peakHour",
+          "unit": "hourOfYear",
+          "availability": "Neither",
+          "band": "N/A",
+          "informational": true,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": null,
+            "available": false,
+            "unit": "hourOfYear"
+          },
+          "openStudio": {
+            "value": null,
+            "available": false,
+            "unit": "hourOfYear"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+          "key": "cooling.unmetHours",
+          "unit": "h",
+          "availability": "Neither",
+          "band": "N/A",
+          "informational": false,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": null,
+            "available": false,
+            "unit": "h"
+          },
+          "openStudio": {
+            "value": null,
+            "available": false,
+            "unit": "h"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        }
+      ]
+    },
+    {
+      "scope": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+      "guid": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+      "tasName": "Office B",
+      "openStudioName": "Office B (OS)",
+      "matchKind": "Guid",
+      "metrics": [
+        {
+          "scope": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+          "key": "area",
+          "unit": "m2",
+          "availability": "Both",
+          "band": "Warn",
+          "informational": false,
+          "notApplicableReason": null,
+          "circular": false,
+          "tas": {
+            "value": 40,
+            "available": true,
+            "unit": "m2"
+          },
+          "openStudio": {
+            "value": 44,
+            "available": true,
+            "unit": "m2"
+          },
+          "absoluteDifference": 4,
+          "relativeDifference": 0.09090909090909091,
+          "signedDifference": 4
+        },
+        {
+          "scope": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+          "key": "volume",
+          "unit": "m3",
+          "availability": "Both",
+          "band": "Warn",
+          "informational": false,
+          "notApplicableReason": null,
+          "circular": false,
+          "tas": {
+            "value": 120,
+            "available": true,
+            "unit": "m3"
+          },
+          "openStudio": {
+            "value": 132,
+            "available": true,
+            "unit": "m3"
+          },
+          "absoluteDifference": 12,
+          "relativeDifference": 0.09090909090909091,
+          "signedDifference": 12
+        },
+        {
+          "scope": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+          "key": "heating.designLoad",
+          "unit": "W",
+          "availability": "Neither",
+          "band": "N/A",
+          "informational": false,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": null,
+            "available": false,
+            "unit": "W"
+          },
+          "openStudio": {
+            "value": null,
+            "available": false,
+            "unit": "W"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+          "key": "heating.peakLoad",
+          "unit": "W",
+          "availability": "Both",
+          "band": "Fail",
+          "informational": false,
+          "notApplicableReason": null,
+          "circular": false,
+          "tas": {
+            "value": 2100,
+            "available": true,
+            "unit": "W"
+          },
+          "openStudio": {
+            "value": 2600,
+            "available": true,
+            "unit": "W"
+          },
+          "absoluteDifference": 500,
+          "relativeDifference": 0.19230769230769232,
+          "signedDifference": 500
+        },
+        {
+          "scope": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+          "key": "heating.peakHour",
+          "unit": "hourOfYear",
+          "availability": "Both",
+          "band": "Fail",
+          "informational": true,
+          "notApplicableReason": null,
+          "circular": true,
+          "tas": {
+            "value": 205,
+            "available": true,
+            "unit": "hourOfYear"
+          },
+          "openStudio": {
+            "value": 240,
+            "available": true,
+            "unit": "hourOfYear"
+          },
+          "absoluteDifference": 35,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+          "key": "heating.unmetHours",
+          "unit": "h",
+          "availability": "Both",
+          "band": "Match",
+          "informational": false,
+          "notApplicableReason": null,
+          "circular": false,
+          "tas": {
+            "value": 0,
+            "available": true,
+            "unit": "h"
+          },
+          "openStudio": {
+            "value": 0,
+            "available": true,
+            "unit": "h"
+          },
+          "absoluteDifference": 0,
+          "relativeDifference": 0,
+          "signedDifference": 0
+        },
+        {
+          "scope": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+          "key": "cooling.designLoad",
+          "unit": "W",
+          "availability": "Neither",
+          "band": "N/A",
+          "informational": false,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": null,
+            "available": false,
+            "unit": "W"
+          },
+          "openStudio": {
+            "value": null,
+            "available": false,
+            "unit": "W"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+          "key": "cooling.peakLoad",
+          "unit": "W",
+          "availability": "Neither",
+          "band": "N/A",
+          "informational": false,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": null,
+            "available": false,
+            "unit": "W"
+          },
+          "openStudio": {
+            "value": null,
+            "available": false,
+            "unit": "W"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+          "key": "cooling.peakHour",
+          "unit": "hourOfYear",
+          "availability": "Neither",
+          "band": "N/A",
+          "informational": true,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": null,
+            "available": false,
+            "unit": "hourOfYear"
+          },
+          "openStudio": {
+            "value": null,
+            "available": false,
+            "unit": "hourOfYear"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+          "key": "cooling.unmetHours",
+          "unit": "h",
+          "availability": "Neither",
+          "band": "N/A",
+          "informational": false,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": null,
+            "available": false,
+            "unit": "h"
+          },
+          "openStudio": {
+            "value": null,
+            "available": false,
+            "unit": "h"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        }
+      ]
+    },
+    {
+      "scope": "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+      "guid": "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+      "tasName": "Plant, level 1",
+      "openStudioName": null,
+      "matchKind": "TasOnly",
+      "metrics": [
+        {
+          "scope": "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+          "key": "area",
+          "unit": "m2",
+          "availability": "TasOnly",
+          "band": "N/A",
+          "informational": false,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": 12,
+            "available": true,
+            "unit": "m2"
+          },
+          "openStudio": {
+            "value": null,
+            "available": false,
+            "unit": "unknown"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+          "key": "volume",
+          "unit": "m3",
+          "availability": "TasOnly",
+          "band": "N/A",
+          "informational": false,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": 36,
+            "available": true,
+            "unit": "m3"
+          },
+          "openStudio": {
+            "value": null,
+            "available": false,
+            "unit": "unknown"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+          "key": "heating.designLoad",
+          "unit": "W",
+          "availability": "Neither",
+          "band": "N/A",
+          "informational": false,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": null,
+            "available": false,
+            "unit": "W"
+          },
+          "openStudio": {
+            "value": null,
+            "available": false,
+            "unit": "unknown"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+          "key": "heating.peakLoad",
+          "unit": "W",
+          "availability": "TasOnly",
+          "band": "N/A",
+          "informational": false,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": 2000,
+            "available": true,
+            "unit": "W"
+          },
+          "openStudio": {
+            "value": null,
+            "available": false,
+            "unit": "unknown"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+          "key": "heating.peakHour",
+          "unit": "hourOfYear",
+          "availability": "TasOnly",
+          "band": "N/A",
+          "informational": true,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": 205,
+            "available": true,
+            "unit": "hourOfYear"
+          },
+          "openStudio": {
+            "value": null,
+            "available": false,
+            "unit": "unknown"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+          "key": "heating.unmetHours",
+          "unit": "h",
+          "availability": "TasOnly",
+          "band": "N/A",
+          "informational": false,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": 0,
+            "available": true,
+            "unit": "h"
+          },
+          "openStudio": {
+            "value": null,
+            "available": false,
+            "unit": "unknown"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+          "key": "cooling.designLoad",
+          "unit": "W",
+          "availability": "Neither",
+          "band": "N/A",
+          "informational": false,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": null,
+            "available": false,
+            "unit": "W"
+          },
+          "openStudio": {
+            "value": null,
+            "available": false,
+            "unit": "unknown"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+          "key": "cooling.peakLoad",
+          "unit": "W",
+          "availability": "Neither",
+          "band": "N/A",
+          "informational": false,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": null,
+            "available": false,
+            "unit": "W"
+          },
+          "openStudio": {
+            "value": null,
+            "available": false,
+            "unit": "unknown"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+          "key": "cooling.peakHour",
+          "unit": "hourOfYear",
+          "availability": "Neither",
+          "band": "N/A",
+          "informational": true,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": null,
+            "available": false,
+            "unit": "hourOfYear"
+          },
+          "openStudio": {
+            "value": null,
+            "available": false,
+            "unit": "unknown"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+          "key": "cooling.unmetHours",
+          "unit": "h",
+          "availability": "Neither",
+          "band": "N/A",
+          "informational": false,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": null,
+            "available": false,
+            "unit": "h"
+          },
+          "openStudio": {
+            "value": null,
+            "available": false,
+            "unit": "unknown"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        }
+      ]
+    },
+    {
+      "scope": "0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d",
+      "guid": "0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d",
+      "tasName": null,
+      "openStudioName": "Atrium",
+      "matchKind": "OpenStudioOnly",
+      "metrics": [
+        {
+          "scope": "0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d",
+          "key": "area",
+          "unit": "m2",
+          "availability": "OpenStudioOnly",
+          "band": "N/A",
+          "informational": false,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": null,
+            "available": false,
+            "unit": "unknown"
+          },
+          "openStudio": {
+            "value": 18,
+            "available": true,
+            "unit": "m2"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d",
+          "key": "volume",
+          "unit": "m3",
+          "availability": "OpenStudioOnly",
+          "band": "N/A",
+          "informational": false,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": null,
+            "available": false,
+            "unit": "unknown"
+          },
+          "openStudio": {
+            "value": 54,
+            "available": true,
+            "unit": "m3"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d",
+          "key": "heating.designLoad",
+          "unit": "W",
+          "availability": "Neither",
+          "band": "N/A",
+          "informational": false,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": null,
+            "available": false,
+            "unit": "unknown"
+          },
+          "openStudio": {
+            "value": null,
+            "available": false,
+            "unit": "W"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d",
+          "key": "heating.peakLoad",
+          "unit": "W",
+          "availability": "OpenStudioOnly",
+          "band": "N/A",
+          "informational": false,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": null,
+            "available": false,
+            "unit": "unknown"
+          },
+          "openStudio": {
+            "value": 2000,
+            "available": true,
+            "unit": "W"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d",
+          "key": "heating.peakHour",
+          "unit": "hourOfYear",
+          "availability": "OpenStudioOnly",
+          "band": "N/A",
+          "informational": true,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": null,
+            "available": false,
+            "unit": "unknown"
+          },
+          "openStudio": {
+            "value": 205,
+            "available": true,
+            "unit": "hourOfYear"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d",
+          "key": "heating.unmetHours",
+          "unit": "h",
+          "availability": "OpenStudioOnly",
+          "band": "N/A",
+          "informational": false,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": null,
+            "available": false,
+            "unit": "unknown"
+          },
+          "openStudio": {
+            "value": 0,
+            "available": true,
+            "unit": "h"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d",
+          "key": "cooling.designLoad",
+          "unit": "W",
+          "availability": "Neither",
+          "band": "N/A",
+          "informational": false,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": null,
+            "available": false,
+            "unit": "unknown"
+          },
+          "openStudio": {
+            "value": null,
+            "available": false,
+            "unit": "W"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d",
+          "key": "cooling.peakLoad",
+          "unit": "W",
+          "availability": "Neither",
+          "band": "N/A",
+          "informational": false,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": null,
+            "available": false,
+            "unit": "unknown"
+          },
+          "openStudio": {
+            "value": null,
+            "available": false,
+            "unit": "W"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d",
+          "key": "cooling.peakHour",
+          "unit": "hourOfYear",
+          "availability": "Neither",
+          "band": "N/A",
+          "informational": true,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": null,
+            "available": false,
+            "unit": "unknown"
+          },
+          "openStudio": {
+            "value": null,
+            "available": false,
+            "unit": "hourOfYear"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        },
+        {
+          "scope": "0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d",
+          "key": "cooling.unmetHours",
+          "unit": "h",
+          "availability": "Neither",
+          "band": "N/A",
+          "informational": false,
+          "notApplicableReason": "unavailable",
+          "circular": false,
+          "tas": {
+            "value": null,
+            "available": false,
+            "unit": "unknown"
+          },
+          "openStudio": {
+            "value": null,
+            "available": false,
+            "unit": "h"
+          },
+          "absoluteDifference": null,
+          "relativeDifference": null,
+          "signedDifference": null
+        }
+      ]
+    }
+  ],
+  "spaceDiagnostics": {
+    "tasCount": 3,
+    "openStudioCount": 3,
+    "matchedByGuid": 2,
+    "matchedByName": 0,
+    "onlyInTas": [
+      "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c"
+    ],
+    "onlyInOpenStudio": [
+      "0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d"
+    ],
+    "duplicateTasGuids": [],
+    "duplicateOpenStudioGuids": [],
+    "duplicateTasNames": [],
+    "duplicateOpenStudioNames": [],
+    "ambiguousNameMatches": []
+  },
+  "reconciliation": [
+    {
+      "engine": "TAS",
+      "key": "floorArea",
+      "unit": "m2",
+      "modelTotal": 240,
+      "modelTotalAvailable": true,
+      "sumOfSpaces": 240,
+      "contributingSpaces": 2,
+      "spacesMissingValue": 0,
+      "excludedSpaces": 1,
+      "complete": false,
+      "absoluteDifference": 0,
+      "relativeDifference": 0,
+      "band": "Match",
+      "notApplicableReason": null
+    },
+    {
+      "engine": "TAS",
+      "key": "volume",
+      "unit": "m3",
+      "modelTotal": 720,
+      "modelTotalAvailable": true,
+      "sumOfSpaces": 720,
+      "contributingSpaces": 2,
+      "spacesMissingValue": 0,
+      "excludedSpaces": 1,
+      "complete": false,
+      "absoluteDifference": 0,
+      "relativeDifference": 0,
+      "band": "Match",
+      "notApplicableReason": null
+    },
+    {
+      "engine": "OpenStudio",
+      "key": "floorArea",
+      "unit": "m2",
+      "modelTotal": 240,
+      "modelTotalAvailable": true,
+      "sumOfSpaces": 244,
+      "contributingSpaces": 2,
+      "spacesMissingValue": 0,
+      "excludedSpaces": 1,
+      "complete": false,
+      "absoluteDifference": 4,
+      "relativeDifference": 0.01639344262295082,
+      "band": "Match",
+      "notApplicableReason": null
+    },
+    {
+      "engine": "OpenStudio",
+      "key": "volume",
+      "unit": "m3",
+      "modelTotal": 720,
+      "modelTotalAvailable": true,
+      "sumOfSpaces": 732,
+      "contributingSpaces": 2,
+      "spacesMissingValue": 0,
+      "excludedSpaces": 1,
+      "complete": false,
+      "absoluteDifference": 12,
+      "relativeDifference": 0.01639344262295082,
+      "band": "Match",
+      "notApplicableReason": null
+    }
+  ]
+}

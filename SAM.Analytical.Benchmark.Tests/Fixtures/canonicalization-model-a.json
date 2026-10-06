@@ -1,0 +1,24 @@
+{
+  "type": "SAM.Analytical.AnalyticalModel",
+  "name": "SingleBox",
+  "guid": "0123456789abcdef0123456789abcdef",
+  "spaces": [
+    { "name": "Office B", "area": 40.0, "index": 1 },
+    { "name": "Office A", "area": 200, "index": 0 }
+  ],
+  "metrics": {
+    "zero": 0,
+    "negative": -12.5,
+    "exponent": 1e2,
+    "trailingZeros": 1.500
+  },
+  "flags": {
+    "occupied": true,
+    "vented": false,
+    "override": null
+  },
+  "text": {
+    "unicode": "café — 中文 😀",
+    "escaped": "line\nbreak\t\"quoted\" \\ </script>"
+  }
+}
