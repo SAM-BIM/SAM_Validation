@@ -113,7 +113,7 @@ jobs:
             $repo
           )
 
-          # Branch resolution: prefer PR head_ref, then current sow branch, then sow/2026-Q2 fallback.
+          # Branch resolution: prefer PR head_ref, then current sow branch, then the dependency's default branch.
           $headRef = '${{ github.head_ref }}'
           $baseRef = '${{ github.base_ref }}'
           $refName = '${{ github.ref_name }}'
@@ -121,7 +121,6 @@ jobs:
           if ($headRef) { $candidates += $headRef }
           $sowRef = if ($baseRef -match '^sow/') { $baseRef } elseif ($refName -match '^sow/') { $refName } else { '' }
           if ($sowRef -and $sowRef -ne $headRef) { $candidates += $sowRef }
-          $candidates += 'sow/2026-Q2'
 
           # Clone everything except the last one (already checked out by Actions)
           $deps = $buildOrder[0..($buildOrder.Count-2)]
