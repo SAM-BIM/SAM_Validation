@@ -120,18 +120,9 @@ namespace SAM.Analytical.Benchmark.Compare
         private static IReadOnlyList<MetricComparison> CompareModel(BenchmarkModelResult? tas, BenchmarkModelResult? openStudio, ToleranceProfile profile)
         {
             // ModelScope is shared with IsInformationalForNumericalGate, which recognises the two whole-model
-            // peak-load keys below by scope + key rather than by a scattered string comparison.
-            return new List<MetricComparison>
-            {
-                Band(ModelScope, "consumptionHeating", tas?.ConsumptionHeating, openStudio?.ConsumptionHeating, profile),
-                Band(ModelScope, "consumptionCooling", tas?.ConsumptionCooling, openStudio?.ConsumptionCooling, profile),
-                Band(ModelScope, "peakHeatingLoad", tas?.PeakHeatingLoad, openStudio?.PeakHeatingLoad, profile),
-                Band(ModelScope, "peakHeatingHour", tas?.PeakHeatingHour, openStudio?.PeakHeatingHour, profile),
-                Band(ModelScope, "peakCoolingLoad", tas?.PeakCoolingLoad, openStudio?.PeakCoolingLoad, profile),
-                Band(ModelScope, "peakCoolingHour", tas?.PeakCoolingHour, openStudio?.PeakCoolingHour, profile),
-                Band(ModelScope, "floorArea", tas?.FloorArea, openStudio?.FloorArea, profile),
-                Band(ModelScope, "volume", tas?.Volume, openStudio?.Volume, profile)
-            };
+            // peak-load keys by scope + key rather than by a scattered string comparison. The keys come from
+            // ModelMetricValues so a consumer listing one engine's metrics uses the same keys and order.
+            return CompareMetricValues(ModelScope, ModelMetricValues(tas), ModelMetricValues(openStudio), profile);
         }
 
         private static IReadOnlyList<SpaceComparison> CompareSpaces(SpaceAlignment alignment, ToleranceProfile profile)
@@ -176,29 +167,23 @@ namespace SAM.Analytical.Benchmark.Compare
 
         private static IReadOnlyList<MetricComparison> CompareSpaceMetrics(string scope, BenchmarkSpaceResult? tas, BenchmarkSpaceResult? openStudio, ToleranceProfile profile)
         {
-            var metrics = new List<MetricComparison>
-            {
-                Band(scope, "area", tas?.Area, openStudio?.Area, profile),
-                Band(scope, "volume", tas?.Volume, openStudio?.Volume, profile)
-            };
-
-            AddConditionMetrics(metrics, scope, "heating", tas?.Heating, openStudio?.Heating, profile);
-            AddConditionMetrics(metrics, scope, "cooling", tas?.Cooling, openStudio?.Cooling, profile);
-            return metrics;
+            return CompareMetricValues(scope, SpaceMetricValues(tas), SpaceMetricValues(openStudio), profile);
         }
 
-        private static void AddConditionMetrics(
-            ICollection<MetricComparison> metrics,
+        private static IReadOnlyList<MetricComparison> CompareMetricValues(
             string scope,
-            string condition,
-            BenchmarkConditionResult? tas,
-            BenchmarkConditionResult? openStudio,
+            IReadOnlyList<KeyValuePair<string, MetricValue?>> tas,
+            IReadOnlyList<KeyValuePair<string, MetricValue?>> openStudio,
             ToleranceProfile profile)
         {
-            metrics.Add(Band(scope, condition + ".designLoad", tas?.DesignLoad, openStudio?.DesignLoad, profile));
-            metrics.Add(Band(scope, condition + ".peakLoad", tas?.PeakLoad, openStudio?.PeakLoad, profile));
-            metrics.Add(Band(scope, condition + ".peakHour", tas?.PeakHour, openStudio?.PeakHour, profile));
-            metrics.Add(Band(scope, condition + ".unmetHours", tas?.UnmetHours, openStudio?.UnmetHours, profile));
+            // Both lists come from the same enumerator, so they always have the same keys in the same order.
+            var metrics = new List<MetricComparison>(tas.Count);
+            for (int i = 0; i < tas.Count; i++)
+            {
+                metrics.Add(Band(scope, tas[i].Key, tas[i].Value, openStudio[i].Value, profile));
+            }
+
+            return metrics;
         }
     }
 }

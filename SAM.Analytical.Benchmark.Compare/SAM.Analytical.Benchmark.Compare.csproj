@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <TargetFramework>net8.0</TargetFramework>
-    <AssemblyName>benchmark-compare</AssemblyName>
+    <AssemblyName>SAM.Analytical.Benchmark.Compare</AssemblyName>
     <RootNamespace>SAM.Analytical.Benchmark.Compare</RootNamespace>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
@@ -11,8 +11,10 @@
   </PropertyGroup>
 
   <!--
-    Ship the executable in the repository build\ folder (flat, unsuffixed) so CI's `**\build\*` artifact
-    upload includes benchmark-compare alongside the schema DLL, matching the producer executables.
+    The reusable comparator library (SAM#211): Query.Compare, Modify.WriteReports and the DTOs, consumed
+    in-process by SAM_UI and later SAM MCP. The benchmark-compare executable is a thin wrapper over it
+    (SAM.Analytical.Benchmark.Compare.Cli). Both ship flat in the repository build\ folder, next to the
+    schema DLL, so consumers reference build\SAM.Analytical.Benchmark.Compare.dll by HintPath.
   -->
   <PropertyGroup>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
