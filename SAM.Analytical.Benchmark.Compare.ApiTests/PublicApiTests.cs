@@ -96,6 +96,26 @@ namespace SAM.Analytical.Benchmark.Compare.ApiTests
             }
         }
 
+        [TestMethod]
+        public void ConsumerCanListOneEnginesMetricsWithTheComparatorsKeys()
+        {
+            string caseDirectory = Path.Combine(SourceDirectory(), "..", "SAM.Analytical.Benchmark.Compare.Tests", "Fixtures", "Regression", "weather-mismatch");
+            BenchmarkDocument tas = BenchmarkSerializer.Read(Path.Combine(caseDirectory, "benchmark-TAS.json"));
+            BenchmarkDocument openStudio = BenchmarkSerializer.Read(Path.Combine(caseDirectory, "benchmark-OpenStudio.json"));
+            ComparisonResult result = Query.Compare(tas, openStudio, ToleranceProfile.Default);
+
+            // Same keys, same order as the comparator's model rows; a missing result lists every key with no value.
+            IReadOnlyList<KeyValuePair<string, MetricValue?>> model = Query.ModelMetricValues(tas.Model);
+            CollectionAssert.AreEqual(result.ModelMetrics.Select(x => x.Key).ToArray(), model.Select(x => x.Key).ToArray());
+            Assert.IsTrue(Query.ModelMetricValues(null).All(x => x.Value == null));
+
+            SpaceComparison space = result.Spaces.First();
+            BenchmarkSpaceResult tasSpace = tas.Spaces!.First(x => x.Name == space.TasName);
+            IReadOnlyList<KeyValuePair<string, MetricValue?>> spaceValues = Query.SpaceMetricValues(tasSpace);
+            CollectionAssert.AreEqual(space.Metrics.Select(x => x.Key).ToArray(), spaceValues.Select(x => x.Key).ToArray());
+            Assert.IsTrue(Query.SpaceMetricValues(null).All(x => x.Value == null));
+        }
+
         private static string SourceDirectory([CallerFilePath] string? sourceFilePath = null)
         {
             return Path.GetDirectoryName(sourceFilePath!)!;
