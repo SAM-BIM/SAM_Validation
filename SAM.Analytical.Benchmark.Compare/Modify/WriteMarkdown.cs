@@ -212,8 +212,10 @@ namespace SAM.Analytical.Benchmark.Compare
             Line(builder, Row("Name", profile.Name));
             Line(builder, Row("Warn (relative)", PresentationFormat.Threshold(profile.WarnRelative)));
             Line(builder, Row("Fail (relative)", PresentationFormat.Threshold(profile.FailRelative)));
-            Line(builder, Row("Peak-hour warn (h)", Count((int)profile.HourWarnAbsolute)));
-            Line(builder, Row("Peak-hour fail (h)", Count((int)profile.HourFailAbsolute)));
+            //Configurable thresholds are not hour-of-year indices: a profile may legitimately use 1.5 h or 24.5 h. The raw value is
+            //rendered exactly as comparison.csv and comparison-summary.json render it (Format.Number), never truncated to an integer.
+            Line(builder, Row("Peak-hour warn (h)", Format.Number(profile.HourWarnAbsolute)));
+            Line(builder, Row("Peak-hour fail (h)", Format.Number(profile.HourFailAbsolute)));
             Line(builder, Row("Default near-zero floor", PresentationFormat.Number(profile.DefaultNearZeroFloor, MetricUnit.Unknown)));
             foreach (KeyValuePair<MetricUnit, double> floor in profile.ConfiguredNearZeroFloors())
             {

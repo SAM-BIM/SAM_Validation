@@ -128,6 +128,46 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
         }
 
         [TestMethod]
+        public void MarkdownKeepsFractionalHourThresholdsAndAgreesWithTheRawProfile()
+        {
+            //Configurable hour thresholds are not hour-of-year indices. A profile may use 1.5 h / 24.5 h, and the Markdown must
+            //carry those values exactly as comparison.csv and comparison-summary.json do - never 1 / 24.
+            ToleranceProfile profile = new ToleranceProfile(
+                "fractional-hours",
+                warnRelative: 0.05,
+                failRelative: 0.15,
+                hourWarnAbsolute: 1.5,
+                hourFailAbsolute: 24.5,
+                nearZeroFloors: new System.Collections.Generic.Dictionary<MetricUnit, double>(),
+                defaultNearZeroFloor: 0);
+
+            ComparisonResult result = Query.Compare(ScenarioDocuments.Tas(), ScenarioDocuments.OpenStudio(), profile);
+
+            string markdown = Modify.WriteMarkdown(result);
+            string csv = Modify.WriteCsv(result);
+            string summary = Modify.WriteSummaryJson(result);
+
+            StringAssert.Contains(markdown, "| Peak-hour warn (h) | 1.5 |");
+            StringAssert.Contains(markdown, "| Peak-hour fail (h) | 24.5 |");
+            Assert.IsFalse(markdown.Contains("| Peak-hour warn (h) | 1 |", StringComparison.Ordinal));
+            Assert.IsFalse(markdown.Contains("| Peak-hour fail (h) | 24 |", StringComparison.Ordinal));
+
+            //The raw reports are the contract this presentation must agree with.
+            using (System.Text.Json.JsonDocument document = System.Text.Json.JsonDocument.Parse(summary))
+            {
+                System.Text.Json.JsonElement detail = document.RootElement.GetProperty("toleranceProfileDetail");
+                Assert.AreEqual(profile.HourWarnAbsolute, detail.GetProperty("hourWarnAbsolute").GetDouble());
+                Assert.AreEqual(profile.HourFailAbsolute, detail.GetProperty("hourFailAbsolute").GetDouble());
+            }
+
+            string[] lines = csv.TrimEnd('\n').Split('\n');
+            foreach (string line in lines.Skip(1))
+            {
+                StringAssert.Contains(line, ",1.5,24.5,0,");
+            }
+        }
+
+        [TestMethod]
         public void GoldenReportsMatchCommittedFixturesByteForByte()
         {
             // Regenerate goldens (and the two input fixtures) when explicitly requested; otherwise assert.
