@@ -3,7 +3,7 @@
 Status: implemented on `claude/tas-openstudio-comparison`; draft PR, owner review required. Not merged.
 Issue: SAM-BIM/SAM#211 (sub-issue of SAM#209, tracker SAM#206). Consumer: SAM-BIM/SAM_UI#231, via its draft PR on the same branch name.
 Base: `sow/2026-Q4` at `c9a7f193f46289f52eecdd4a7dc6179789f2c4e9`.
-Tested content SHA: `b0f3a1628e70b0ec9bd6db5eef2363af86245ecf`. This record is the only change after it.
+Tested content SHA: `70f1411` (library extraction `b0f3a16` + metric enumeration). This record is the only change after it.
 Final PR head and hosted checks: recorded in the live PR description.
 
 ## What changed
@@ -25,10 +25,13 @@ Final PR head and hosted checks: recorded in the live PR description.
   - every `MetricComparison` member, rendered with `Format`;
   - spaces, diagnostics and reconciliation;
   - `WriteReports`.
+- **Per-engine metric enumeration** (`Query/MetricValues.cs`, added for SAM_UI's unified Run Simulation partial-completion display):
+  - `Query.ModelMetricValues(BenchmarkModelResult?)` and `Query.SpaceMetricValues(BenchmarkSpaceResult?)` return one engine's metrics as ordered `(key, MetricValue?)` pairs. Keys and order match the comparator's rows, and an unreported metric has a `null` value: nothing is substituted.
+  - `CompareModel`/`CompareSpaceMetrics` now build their rows from these lists, so the key list exists once. The regression goldens are unchanged.
 - **`.github/workflows/build.yml`:** the engine-reference check now covers the library and the CLI, and the API tests run after the comparator tests.
 
 Public API (supported contract):
-- `Query.Compare`, `Query.IsInformationalForNumericalGate`;
+- `Query.Compare`, `Query.IsInformationalForNumericalGate`, `Query.ModelMetricValues`, `Query.SpaceMetricValues`;
 - `Modify.WriteReports`, `WriteMarkdown`, `WriteCsv`, `WriteSummaryJson`, `ToUtf8` and the file-name constants;
 - `Format.*`;
 - `ComparisonResult`, `MetricComparison`, `SpaceComparison`, `SpaceMatchDiagnostics`, `ProvenanceCompatibility`/`ProvenanceMismatch`, `ReconciliationResult`, `ToleranceProfile` (`Default`, `Resolve`);
@@ -46,7 +49,8 @@ Local runs were on Linux with .NET SDK 10.0.112 targeting net8.0. GitHub checks 
 |---|---|
 | Baseline before the change: `dotnet test SAM.Analytical.Benchmark.Compare.Tests -c Release` | PASS 87/87 |
 | After: `dotnet test SAM.Analytical.Benchmark.Compare.Tests -c Release` (87 existing + 6 regression) | PASS 93/93 |
-| After: `dotnet test SAM.Analytical.Benchmark.Compare.ApiTests -c Release` | PASS 1/1 |
+| After: `dotnet test SAM.Analytical.Benchmark.Compare.ApiTests -c Release` | PASS 2/2 (at `70f1411`) |
+| After the enumeration refactor (`70f1411`): `dotnet test SAM.Analytical.Benchmark.Compare.Tests -c Release` (goldens byte-identical) | PASS 93/93 |
 | `dotnet build/benchmark-compare.dll --tas … --openstudio … --out … --fail-on-gate warn` on the scenario case | exit 1 (as golden); the 3 reports byte-identical to golden |
 | Downstream: SAM_UI CI builds this branch (same branch name) together with SAM_Tas, whose benchmark references `build\SAM.Analytical.Benchmark.dll` (unchanged) | See the SAM_UI PR checks |
 
