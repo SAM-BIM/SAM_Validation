@@ -113,7 +113,7 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
             Assert.IsTrue(Query.IsInformationalForNumericalGate(peakLoad));
 
             string markdown = Modify.WriteMarkdown(result);
-            StringAssert.Contains(markdown, "| peakHeatingLoad | kW | 10 | 30 | 20 | 66.66666666666666 | Fail | informational (excluded from the numerical status) |");
+            StringAssert.Contains(markdown, "| peakHeatingLoad | kW | 10.00 | 30.00 | 20.00 | 66.67 | Fail | Informational — excluded from numerical status |");
             StringAssert.Contains(markdown, "**excluded from the numerical status**");
 
             StringAssert.Contains(Modify.WriteCsv(result), "model,peakHeatingLoad,kW,Both,10,30,20,");

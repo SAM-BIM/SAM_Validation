@@ -75,6 +75,12 @@ namespace SAM.Analytical.Benchmark.Compare
 
         public int FailCount => AllMetrics.Count(metric => metric.Band == ComparisonBand.Fail);
 
+        /// <summary>Fail bands that are informational; they are shown but excluded from the numerical status.</summary>
+        public int InformationalFailCount => AllMetrics.Count(metric => metric.Band == ComparisonBand.Fail && Query.IsInformationalForNumericalGate(metric));
+
+        /// <summary>Fail bands that contribute to the numerical status. Always <see cref="FailCount"/> minus <see cref="InformationalFailCount"/>.</summary>
+        public int ContributingFailCount => FailCount - InformationalFailCount;
+
         public int NotApplicableCount => AllMetrics.Count(metric => metric.Band == ComparisonBand.NotApplicable);
 
         /// <summary>

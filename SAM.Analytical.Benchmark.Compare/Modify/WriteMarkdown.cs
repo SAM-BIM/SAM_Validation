@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 // Copyright (c) 2020-2026 Michal Dengusiak & Jakub Ziolkowski and contributors
 
+using SAM.Analytical.Benchmark;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 
 namespace SAM.Analytical.Benchmark.Compare
@@ -13,6 +15,11 @@ namespace SAM.Analytical.Benchmark.Compare
         /// Renders a human-readable Markdown report. The content is derived entirely from the comparison
         /// (no wall-clock or machine-specific data is added), so the output is deterministic and
         /// byte-stable. Provisional tolerance bands are labelled as such.
+        /// <para>
+        /// Presentation only: engineering quantities, absolute differences and normalized percentages use
+        /// two decimals; hour-of-year values and hour differences stay integers. comparison.csv and
+        /// comparison-summary.json continue to use the raw, full-precision <see cref="Format"/> contract.
+        /// </para>
         /// </summary>
         public static string WriteMarkdown(ComparisonResult result)
         {
@@ -32,6 +39,11 @@ namespace SAM.Analytical.Benchmark.Compare
             Line(builder, "reconciliation is a separate within-document diagnostic status that also contributes to the");
             Line(builder, "overall gate.");
             Line(builder, string.Empty);
+            Line(builder, "Presentation: engineering quantities, absolute differences and normalized percentages are shown to");
+            Line(builder, "two decimals. `comparison.csv` and `comparison-summary.json` keep full precision. `n/a` = not");
+            Line(builder, "reported by at least one engine; `—` = not applicable (for example, no percentage for a circular");
+            Line(builder, "hour). Neither marker is ever zero. Hour-of-year values and hour differences are integers.");
+            Line(builder, string.Empty);
 
             Line(builder, "## Summary");
             Line(builder, string.Empty);
@@ -43,14 +55,20 @@ namespace SAM.Analytical.Benchmark.Compare
             Line(builder, Row("Coverage status", Format.Gate(result.CoverageStatus)));
             Line(builder, Row("Provenance status", Format.Gate(result.ProvenanceStatus)));
             Line(builder, Row("Reconciliation status", Format.Gate(result.ReconciliationStatus)));
-            Line(builder, Row("Metrics matched", result.MatchCount.ToString(System.Globalization.CultureInfo.InvariantCulture)));
-            Line(builder, Row("Metrics warned", result.WarnCount.ToString(System.Globalization.CultureInfo.InvariantCulture)));
-            Line(builder, Row("Metrics failed", result.FailCount.ToString(System.Globalization.CultureInfo.InvariantCulture)));
-            Line(builder, Row("Metrics not applicable", result.NotApplicableCount.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+            Line(builder, Row("Metrics matched", Count(result.MatchCount)));
+            Line(builder, Row("Metrics warned", Count(result.WarnCount)));
+            Line(builder, Row("Metrics failed (all bands)", Count(result.FailCount)));
+            Line(builder, Row("Fail rows contributing to numerical status", Count(result.ContributingFailCount)));
+            Line(builder, Row("Fail rows informational (excluded)", Count(result.InformationalFailCount)));
+            Line(builder, Row("Metrics not applicable", Count(result.NotApplicableCount)));
             Line(builder, Row("Required metrics compared", Count(result.ComparableMetricCount) + " of " + Count(result.RequiredMetricCount)));
             Line(builder, Row("Required metrics unavailable", Count(result.UnavailableRequiredMetricCount)));
             Line(builder, Row("TAS schema version", result.TasSchemaVersion));
             Line(builder, Row("OpenStudio schema version", result.OpenStudioSchemaVersion));
+            Line(builder, string.Empty);
+            Line(builder, "Band counts include informational rows: " + Count(result.InformationalFailCount) + " of the "
+                + Count(result.FailCount) + " Fail rows are informational and excluded from the numerical status; "
+                + Count(result.ContributingFailCount) + " contribute to it.");
             Line(builder, string.Empty);
 
             if (result.SchemaDriftNote != null)
@@ -62,13 +80,31 @@ namespace SAM.Analytical.Benchmark.Compare
             AppendCoverage(builder, result);
             AppendProvenanceCompatibility(builder, result);
             AppendToleranceProfile(builder, result);
+            AppendDifferenceDefinition(builder, result);
             AppendProvenance(builder, result);
+            AppendEngineNotes(builder, result);
             AppendModelMetrics(builder, result);
             AppendReconciliation(builder, result);
             AppendSpaceDiagnostics(builder, result);
             AppendSpaceMetrics(builder, result);
 
             return builder.ToString();
+        }
+
+        private static void AppendDifferenceDefinition(StringBuilder builder, ComparisonResult result)
+        {
+            ToleranceProfile profile = result.ToleranceProfile;
+            Line(builder, "## Difference definition");
+            Line(builder, string.Empty);
+            Line(builder, "Normalized difference (%) = 100 × |OpenStudio − TAS| / max(|TAS|, |OpenStudio|, applicable near-zero floor).");
+            Line(builder, string.Empty);
+            Line(builder, "It is unsigned and is **not** percentage change against TAS. Peak-hour metrics use the circular hour");
+            Line(builder, "difference and have no percentage. Bands use the stored fractions, shown here as Match < "
+                + PresentationFormat.Threshold(profile.WarnRelative) + ", Warn "
+                + PresentationFormat.Threshold(profile.WarnRelative) + " to < "
+                + PresentationFormat.Threshold(profile.FailRelative) + ", Fail >= "
+                + PresentationFormat.Threshold(profile.FailRelative) + " (provisional).");
+            Line(builder, string.Empty);
         }
 
         private static void AppendCoverage(StringBuilder builder, ComparisonResult result)
@@ -174,14 +210,14 @@ namespace SAM.Analytical.Benchmark.Compare
             Line(builder, "| Setting | Value |");
             Line(builder, "| --- | --- |");
             Line(builder, Row("Name", profile.Name));
-            Line(builder, Row("Warn (relative)", Format.Number(profile.WarnRelative)));
-            Line(builder, Row("Fail (relative)", Format.Number(profile.FailRelative)));
-            Line(builder, Row("Peak-hour warn (h)", Format.Number(profile.HourWarnAbsolute)));
-            Line(builder, Row("Peak-hour fail (h)", Format.Number(profile.HourFailAbsolute)));
-            Line(builder, Row("Default near-zero floor", Format.Number(profile.DefaultNearZeroFloor)));
-            foreach (System.Collections.Generic.KeyValuePair<MetricUnit, double> floor in profile.ConfiguredNearZeroFloors())
+            Line(builder, Row("Warn (relative)", PresentationFormat.Threshold(profile.WarnRelative)));
+            Line(builder, Row("Fail (relative)", PresentationFormat.Threshold(profile.FailRelative)));
+            Line(builder, Row("Peak-hour warn (h)", Count((int)profile.HourWarnAbsolute)));
+            Line(builder, Row("Peak-hour fail (h)", Count((int)profile.HourFailAbsolute)));
+            Line(builder, Row("Default near-zero floor", PresentationFormat.Number(profile.DefaultNearZeroFloor, MetricUnit.Unknown)));
+            foreach (KeyValuePair<MetricUnit, double> floor in profile.ConfiguredNearZeroFloors())
             {
-                Line(builder, Row("Near-zero floor (" + Format.Unit(floor.Key) + ")", Format.Number(floor.Value)));
+                Line(builder, Row("Near-zero floor (" + Format.Unit(floor.Key) + ")", PresentationFormat.Number(floor.Value, floor.Key)));
             }
 
             Line(builder, string.Empty);
@@ -207,6 +243,53 @@ namespace SAM.Analytical.Benchmark.Compare
             Line(builder, Row3("Source model GUID", tas?.SourceModelGuid, openStudio?.SourceModelGuid));
             Line(builder, Row3("SAM commit", tas?.SamCommit, openStudio?.SamCommit));
             Line(builder, string.Empty);
+            Line(builder, "`Design-day source: None` means no design-day source was supplied; sizing-period runs stay disabled.");
+            Line(builder, string.Empty);
+            Line(builder, "> **Input limitation:** " + PresentationFormat.InputManifestLimitation);
+            Line(builder, string.Empty);
+        }
+
+        private static void AppendEngineNotes(StringBuilder builder, ComparisonResult result)
+        {
+            Line(builder, "## Engine warnings and notes");
+            Line(builder, string.Empty);
+            Line(builder, "These are the producers' own diagnostics; they are not comparison results and do not change a band.");
+            Line(builder, string.Empty);
+            AppendEngineNotes(builder, "TAS", result.TasProvenance);
+            AppendEngineNotes(builder, "OpenStudio", result.OpenStudioProvenance);
+        }
+
+        private static void AppendEngineNotes(StringBuilder builder, string engine, BenchmarkProvenance? provenance)
+        {
+            Line(builder, "### " + engine);
+            Line(builder, string.Empty);
+            if (provenance == null)
+            {
+                Line(builder, "_No provenance._");
+                Line(builder, string.Empty);
+                return;
+            }
+
+            IReadOnlyList<string> warnings = provenance.Warnings ?? new List<string>();
+            IReadOnlyList<string> notes = provenance.Notes ?? new List<string>();
+            if (warnings.Count == 0 && notes.Count == 0)
+            {
+                Line(builder, "_No warnings or notes._");
+                Line(builder, string.Empty);
+                return;
+            }
+
+            foreach (string warning in warnings)
+            {
+                Line(builder, "- **Warning:** " + EscapeInline(warning));
+            }
+
+            foreach (string note in notes)
+            {
+                Line(builder, "- **Note:** " + EscapeInline(note));
+            }
+
+            Line(builder, string.Empty);
         }
 
         private static void AppendModelMetrics(StringBuilder builder, ComparisonResult result)
@@ -221,7 +304,7 @@ namespace SAM.Analytical.Benchmark.Compare
             Line(builder, "> are therefore banded and shown below but **excluded from the numerical status**, exactly like the");
             Line(builder, "> peak-hour metrics; promoting them into the gate needs the B4 corpus and energy-modeller review.");
             Line(builder, "> Every other metric — annual energy, per-space peak loads, unmet hours, geometry — gates normally.");
-            Line(builder, "> The primary conditioning pairing (OpenStudio Ideal Loads ↔ TAS thermostats + IZAMs + TBD sizing)");
+            Line(builder, "> The primary conditioning pairing (OpenStudio Ideal Loads — TAS thermostats + IZAMs + TBD sizing)");
             Line(builder, "> is a **candidate** pending validation. A tolerance profile cannot remove these limitations.");
             Line(builder, string.Empty);
             AppendMetricTableHeader(builder);
@@ -239,8 +322,8 @@ namespace SAM.Analytical.Benchmark.Compare
             Line(builder, string.Empty);
             Line(builder, "Additive quantities only; non-additive peak loads are not reconciled. Only uniquely-matched spaces are summed; unmatched or ambiguous spaces make a reconciliation incomplete.");
             Line(builder, string.Empty);
-            Line(builder, "| Engine | Quantity | Unit | Model total | Sum of spaces | Abs diff | Band | Used/Missing/Excluded | Complete |");
-            Line(builder, "| --- | --- | --- | --- | --- | --- | --- | --- | --- |");
+            Line(builder, "| Engine | Quantity | Unit | Model total | Sum of spaces | Abs diff | Normalized difference (%) | Band | Used/Missing/Excluded | Complete |");
+            Line(builder, "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |");
             foreach (ReconciliationResult reconciliation in result.Reconciliations)
             {
                 Line(builder, "| " + string.Join(" | ", new[]
@@ -248,13 +331,14 @@ namespace SAM.Analytical.Benchmark.Compare
                     EscapeInline(reconciliation.Engine),
                     EscapeInline(reconciliation.Key),
                     Format.Unit(reconciliation.Unit),
-                    EscapeInline(Format.Number(reconciliation.ModelTotal)),
-                    EscapeInline(Format.Number(reconciliation.SumOfSpaces)),
-                    EscapeInline(Format.Number(reconciliation.AbsoluteDifference)),
+                    EscapeInline(PresentationFormat.Number(reconciliation.ModelTotal, reconciliation.Unit)),
+                    EscapeInline(PresentationFormat.Number(reconciliation.SumOfSpaces, reconciliation.Unit)),
+                    EscapeInline(PresentationFormat.Number(reconciliation.AbsoluteDifference, reconciliation.Unit)),
+                    EscapeInline(reconciliation.RelativeDifference.HasValue
+                        ? PresentationFormat.Percent(reconciliation.RelativeDifference)
+                        : PresentationFormat.NotApplicable),
                     Format.Band(reconciliation.Band),
-                    reconciliation.ContributingSpaces.ToString(System.Globalization.CultureInfo.InvariantCulture)
-                        + "/" + reconciliation.SpacesMissingValue.ToString(System.Globalization.CultureInfo.InvariantCulture)
-                        + "/" + reconciliation.ExcludedSpaces.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    Count(reconciliation.ContributingSpaces) + "/" + Count(reconciliation.SpacesMissingValue) + "/" + Count(reconciliation.ExcludedSpaces),
                     reconciliation.Complete ? "yes" : "no"
                 }) + " |");
             }
@@ -269,10 +353,10 @@ namespace SAM.Analytical.Benchmark.Compare
             Line(builder, string.Empty);
             Line(builder, "| Field | Value |");
             Line(builder, "| --- | --- |");
-            Line(builder, Row("TAS spaces", diagnostics.TasCount.ToString(System.Globalization.CultureInfo.InvariantCulture)));
-            Line(builder, Row("OpenStudio spaces", diagnostics.OpenStudioCount.ToString(System.Globalization.CultureInfo.InvariantCulture)));
-            Line(builder, Row("Matched by GUID", diagnostics.MatchedByGuid.ToString(System.Globalization.CultureInfo.InvariantCulture)));
-            Line(builder, Row("Matched by name", diagnostics.MatchedByName.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+            Line(builder, Row("TAS spaces", Count(diagnostics.TasCount)));
+            Line(builder, Row("OpenStudio spaces", Count(diagnostics.OpenStudioCount)));
+            Line(builder, Row("Matched by GUID", Count(diagnostics.MatchedByGuid)));
+            Line(builder, Row("Matched by name", Count(diagnostics.MatchedByName)));
             Line(builder, string.Empty);
 
             AppendList(builder, "Only in TAS", diagnostics.OnlyInTas);
@@ -295,24 +379,25 @@ namespace SAM.Analytical.Benchmark.Compare
                 return;
             }
 
-            Line(builder, "| Space | Match | Metric | Unit | TAS | OpenStudio | Abs diff | Rel % | Band | Note |");
-            Line(builder, "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |");
+            Line(builder, "| Space | GUID | Match | Metric | Unit | TAS | OpenStudio | Abs diff | Normalized difference (%) | Band | Note |");
+            Line(builder, "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |");
             foreach (SpaceComparison space in result.Spaces)
             {
                 foreach (MetricComparison metric in space.Metrics)
                 {
                     Line(builder, "| " + string.Join(" | ", new[]
                     {
-                        EscapeInline(space.Scope),
+                        EscapeInline(PresentationFormat.SpaceName(space)),
+                        EscapeInline(PresentationFormat.SpaceGuid(space)),
                         Format.MatchKind(space.MatchKind),
                         EscapeInline(metric.Key),
                         Format.Unit(metric.Unit),
-                        EscapeInline(Format.Number(metric.TasValue)),
-                        EscapeInline(Format.Number(metric.OpenStudioValue)),
-                        EscapeInline(Format.Number(metric.AbsoluteDifference)),
-                        EscapeInline(Format.Percent(metric.RelativeDifference)),
+                        EscapeInline(PresentationFormat.Number(metric.TasValue, metric.Unit)),
+                        EscapeInline(PresentationFormat.Number(metric.OpenStudioValue, metric.Unit)),
+                        EscapeInline(PresentationDifference(metric)),
+                        EscapeInline(PresentationPercent(metric)),
                         Format.Band(metric.Band),
-                        EscapeInline(Format.MetricNote(metric))
+                        EscapeInline(PresentationFormat.Note(metric))
                     }) + " |");
                 }
             }
@@ -322,7 +407,7 @@ namespace SAM.Analytical.Benchmark.Compare
 
         private static void AppendMetricTableHeader(StringBuilder builder)
         {
-            Line(builder, "| Metric | Unit | TAS | OpenStudio | Abs diff | Rel % | Band | Note |");
+            Line(builder, "| Metric | Unit | TAS | OpenStudio | Abs diff | Normalized difference (%) | Band | Note |");
             Line(builder, "| --- | --- | --- | --- | --- | --- | --- | --- |");
         }
 
@@ -332,18 +417,43 @@ namespace SAM.Analytical.Benchmark.Compare
             {
                 EscapeInline(label),
                 Format.Unit(metric.Unit),
-                EscapeInline(Format.Number(metric.TasValue)),
-                EscapeInline(Format.Number(metric.OpenStudioValue)),
-                EscapeInline(Format.Number(metric.AbsoluteDifference)),
-                EscapeInline(Format.Percent(metric.RelativeDifference)),
+                EscapeInline(PresentationFormat.Number(metric.TasValue, metric.Unit)),
+                EscapeInline(PresentationFormat.Number(metric.OpenStudioValue, metric.Unit)),
+                EscapeInline(PresentationDifference(metric)),
+                EscapeInline(PresentationPercent(metric)),
                 Format.Band(metric.Band),
-                EscapeInline(Format.MetricNote(metric))
+                EscapeInline(PresentationFormat.Note(metric))
             }) + " |");
+        }
+
+        private static string PresentationDifference(MetricComparison metric)
+        {
+            if (!metric.AbsoluteDifference.HasValue)
+            {
+                return PresentationFormat.Unavailable;
+            }
+
+            return PresentationFormat.Number(metric.AbsoluteDifference, metric.Circular ? MetricUnit.HourOfYear : metric.Unit);
+        }
+
+        private static string PresentationPercent(MetricComparison metric)
+        {
+            if (metric.Circular)
+            {
+                return PresentationFormat.NotApplicable;
+            }
+
+            if (!metric.RelativeDifference.HasValue)
+            {
+                return metric.Band == ComparisonBand.NotApplicable ? PresentationFormat.Unavailable : PresentationFormat.NotApplicable;
+            }
+
+            return PresentationFormat.Percent(metric.RelativeDifference);
         }
 
         private static void AppendList(StringBuilder builder, string title, IReadOnlyList<string> values)
         {
-            Line(builder, "**" + title + ":** " + (values.Count == 0 ? "none" : values.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+            Line(builder, "**" + title + ":** " + (values.Count == 0 ? "none" : Count(values.Count)));
             foreach (string value in values)
             {
                 Line(builder, "- " + EscapeInline(value));
@@ -354,7 +464,7 @@ namespace SAM.Analytical.Benchmark.Compare
 
         private static string Count(int value)
         {
-            return value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            return value.ToString(CultureInfo.InvariantCulture);
         }
 
         private static string Row(string label, string? value)

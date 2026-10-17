@@ -16,6 +16,8 @@ namespace SAM.Analytical.Benchmark.Compare.Tests
     /// the exit code and console output (cli-&lt;mode&gt;.txt, output directory written as &lt;out&gt;). Both routes
     /// after the extraction must reproduce them byte for byte: the wrapper CLI, and a direct library call
     /// (BenchmarkSerializer.Read + Query.Compare + Modify.WriteReports), which is how SAM_UI consumes it.
+    /// The Markdown golden was refreshed for the presentation-only two-decimal report; comparison.csv and
+    /// comparison-summary.json remain byte-identical to the pre-extraction output.
     /// </summary>
     [TestClass]
     public class ExtractionRegressionTests
