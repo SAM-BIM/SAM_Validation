@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>benchmark-compare</AssemblyName>
+    <RootNamespace>SAM.Analytical.Benchmark.Compare</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+  </PropertyGroup>
+  <!--
+    benchmark-compare: the command-line wrapper over the comparator library (SAM#211). It holds only argument
+    parsing, file IO and the exit-code contract; every comparison, band, gate and report comes from
+    SAM.Analytical.Benchmark.Compare. Shipped flat in the repository build\ folder as before, so the executable
+    name, location, options, outputs and exit codes are unchanged.
+  -->
+  <PropertyGroup>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <OutputPath>..\build\</OutputPath>
+  </PropertyGroup>
+  <!-- Engine-independent like the library: only the comparator and the neutral schema (CI reference check). -->
+  <ItemGroup>
+    <ProjectReference Include="..\SAM.Analytical.Benchmark.Compare\SAM.Analytical.Benchmark.Compare.csproj" />
+    <ProjectReference Include="..\SAM.Analytical.Benchmark\SAM.Analytical.Benchmark.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="SAM.Analytical.Benchmark.Compare.Tests" />
+  </ItemGroup>
+</Project>

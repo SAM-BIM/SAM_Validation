@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SAM.Analytical.Benchmark.Compare\SAM.Analytical.Benchmark.Compare.csproj" />
+    <ProjectReference Include="..\SAM.Analytical.Benchmark.Compare.Cli\SAM.Analytical.Benchmark.Compare.Cli.csproj" />
     <ProjectReference Include="..\SAM.Analytical.Benchmark\SAM.Analytical.Benchmark.csproj" />
   </ItemGroup>
 

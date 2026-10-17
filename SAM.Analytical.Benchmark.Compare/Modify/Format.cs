@@ -10,22 +10,26 @@ namespace SAM.Analytical.Benchmark.Compare
     /// Deterministic, invariant-culture formatting shared by every report writer. Numeric values are
     /// emitted at full binary64 precision (the shortest round-trippable form) with NO rounding, so the
     /// reports are byte-stable and exactly reproducible.
+    /// <para>
+    /// Public (SAM#211) so consumers such as SAM_UI display exactly the strings the reports contain, instead of
+    /// formatting values, units, bands and availabilities a second way.
+    /// </para>
     /// </summary>
-    internal static class Format
+    public static class Format
     {
-        internal static string Number(double? value)
+        public static string Number(double? value)
         {
             return value.HasValue ? value.Value.ToString(CultureInfo.InvariantCulture) : string.Empty;
         }
 
-        internal static string Percent(double? relative)
+        public static string Percent(double? relative)
         {
             // The relative difference is a fraction; a percentage is a convenience view of the same
             // underlying value and is likewise emitted without rounding.
             return relative.HasValue ? (relative.Value * 100d).ToString(CultureInfo.InvariantCulture) : string.Empty;
         }
 
-        internal static string Unit(MetricUnit unit)
+        public static string Unit(MetricUnit unit)
         {
             switch (unit)
             {
@@ -41,7 +45,7 @@ namespace SAM.Analytical.Benchmark.Compare
             }
         }
 
-        internal static string Band(ComparisonBand band)
+        public static string Band(ComparisonBand band)
         {
             switch (band)
             {
@@ -52,7 +56,7 @@ namespace SAM.Analytical.Benchmark.Compare
             }
         }
 
-        internal static string Gate(GateStatus gate)
+        public static string Gate(GateStatus gate)
         {
             switch (gate)
             {
@@ -62,7 +66,7 @@ namespace SAM.Analytical.Benchmark.Compare
             }
         }
 
-        internal static string Availability(ComparisonAvailability availability)
+        public static string Availability(ComparisonAvailability availability)
         {
             switch (availability)
             {
@@ -73,7 +77,7 @@ namespace SAM.Analytical.Benchmark.Compare
             }
         }
 
-        internal static string MatchKind(SpaceMatchKind kind)
+        public static string MatchKind(SpaceMatchKind kind)
         {
             switch (kind)
             {
@@ -84,7 +88,7 @@ namespace SAM.Analytical.Benchmark.Compare
             }
         }
 
-        internal static string NotApplicableReason(NotApplicableReason reason)
+        public static string NotApplicableReason(NotApplicableReason reason)
         {
             switch (reason)
             {
@@ -97,7 +101,7 @@ namespace SAM.Analytical.Benchmark.Compare
         /// <summary>The marker appended to a metric that carries a band which cannot move the numerical status.</summary>
         internal const string InformationalNote = "informational (excluded from the numerical status)";
 
-        internal static string NotApplicableNote(MetricComparison metric)
+        public static string NotApplicableNote(MetricComparison metric)
         {
             switch (metric.NotApplicableReason)
             {
@@ -116,7 +120,7 @@ namespace SAM.Analytical.Benchmark.Compare
         /// reader would see a Fail band on a whole-model peak load or a peak hour and reasonably assume it
         /// contributed to the gate.
         /// </summary>
-        internal static string MetricNote(MetricComparison metric)
+        public static string MetricNote(MetricComparison metric)
         {
             string note = NotApplicableNote(metric);
             if (metric.Band == ComparisonBand.NotApplicable || !Query.IsInformationalForNumericalGate(metric))

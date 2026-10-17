@@ -1,0 +1,5 @@
+exit=0
+Wrote <out>/comparison.md
+Wrote <out>/comparison.csv
+Wrote <out>/comparison-summary.json
+Gate=Fail match=10 warn=4 fail=3 na=31
