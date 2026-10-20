@@ -14,8 +14,13 @@ explicitly documented S06 exception. New repository stamping is not to be implem
 state the following:
 - In a SAM_Deploy installer build without overrides, `samCommit` and `runnerCommit` hold the **SAM_Deploy build
   revision**, because every assembly carries the SAM_Deploy commit as its InformationalVersion metadata.
-- The field alone does not tell the two kinds of revision apart. The installer stamp does: it is
-  `<year>.<quarter>.<run>.0+<revision>`, which SAM_UI records in `application.sourceRevisionOf`.
+- The field alone does not tell the two kinds of revision apart. The installer stamp does: the InformationalVersion
+  `<year>.<quarter>.<run>.0+<revision>`. SAM_UI's run manifest records it under `provenance.application`:
+  - the full stamp in `entryAssembly.informationalVersion` and each `components[].informationalVersion`;
+  - the extracted SHA in `sourceRevision`.
+
+  `sourceRevisionOf` is explanatory text only. (Corrected after review: an earlier head, `cb84fd9`, said the stamp was
+  in `sourceRevisionOf`.)
 - The actual revisions come from the pinned gitlinks: `git ls-tree <SAM_Deploy revision> SAM SAM_Tas SAM_OpenStudio`.
 - Existing documents keep their meaning. Developer runs with `SAM_COMMIT` (S05 and earlier) hold repository revisions.
   No historical value is redefined.
@@ -24,6 +29,9 @@ state the following:
 On the S06 installed candidate (SAM_Deploy `717533c`, hosted installer run #227, genuine install), both producers reported
 `samCommit` = `runnerCommit` = `717533c`. The gitlinks of `717533c` give SAM `df27563b`, SAM_Tas `e84aeff6` and
 SAM_OpenStudio `1f4bf60c`. Evidence is in SAM_Deploy#66, `evidence/s06-20261020/runs/x3-installer-both-embedded/`.
+The committed genuine-installer manifests (x1 `box.tas-run.json`, x2 `openstudio-run.json`, x3 `engine-comparison-run.json`)
+record `provenance.application.sourceRevision` = `717533c`. Their `entryAssembly.informationalVersion` and every
+`components[].informationalVersion` are `2026.4.227.0+717533c`. Their `sourceRevisionOf` is the explanatory sentence.
 
 ## Decisions and assumptions
 - This is documentation only. The schema version, the validators and the producers are unchanged. A field naming the
@@ -40,7 +48,8 @@ SAM_OpenStudio `1f4bf60c`. Evidence is in SAM_Deploy#66, `evidence/s06-20261020/
 - The producers' resolution order was checked against `Program.cs` in SAM_Tas (`benchmark/SAM.Analytical.Tas.Benchmark.Cli`)
   and SAM_OpenStudio (`benchmark/SAM.Analytical.OpenStudio.Benchmark`).
 - The stamp format was checked against SAM_Deploy `installer.yml` "Compute SAMVersion".
-- Hosted CI: see the PR description.
+- The manifest field names and values were checked against the committed SAM_Deploy#66 manifests listed under Evidence.
+- Hosted CI: `cb84fd9` passed Build (Windows) (SAM_Validation run 39398892361) and spdx. Later heads: see the PR description.
 
 ## Unresolved
 None for this PR. SAM_Deploy's `SAM_Validation` gitlink stays at `68eded00`: this change ships no binary.

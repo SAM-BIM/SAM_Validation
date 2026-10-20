@@ -50,7 +50,11 @@ Accepted limitation (owner decision, roadmap S06, 2026-10-20). The producers res
 2. the `SAM_COMMIT` / `RUNNER_COMMIT` environment variable;
 3. the `+<revision>` build metadata of the InformationalVersion, of `SAM.Analytical` for `samCommit` and of the producer's own assembly for `runnerCommit`.
 
-A SAM_Deploy installer build stamps every assembly with the SAM_Deploy commit it was built from. So a producer run from an installed build, without overrides, writes that **SAM_Deploy build revision** into both fields, not the SAM or producer repository revision. The field alone does not say which kind of revision it holds. A SAM_Deploy installer build is recognisable by its stamp: version `<year>.<quarter>.<run>.0+<SAM_Deploy revision>` on the producer and SAM assemblies, which SAM_UI's run manifest records in `application.sourceRevisionOf`.
+A SAM_Deploy installer build stamps every assembly with the SAM_Deploy commit it was built from. So a producer run from an installed build, without overrides, writes that **SAM_Deploy build revision** into both fields, not the SAM or producer repository revision. The field alone does not say which kind of revision it holds. A SAM_Deploy installer build is recognisable by its stamp: the InformationalVersion `<year>.<quarter>.<run>.0+<SAM_Deploy revision>` on the producer and SAM assemblies. SAM_UI's run manifest records it under `provenance.application`:
+- the full stamp in `entryAssembly.informationalVersion` and in each `components[].informationalVersion`;
+- the extracted revision in `sourceRevision`.
+
+`sourceRevisionOf` is explanatory text that says where `sourceRevision` comes from; it is not a revision or a stamp.
 
 To recover the actual source revisions, read the gitlinks that the SAM_Deploy revision pins:
 `git ls-tree <SAM_Deploy revision> SAM SAM_Tas SAM_OpenStudio` in `SAM-BIM/SAM_Deploy`. The SAM entry gives `samCommit`; SAM_Tas gives the Tas producer's `runnerCommit`, and SAM_OpenStudio the OpenStudio producer's.
