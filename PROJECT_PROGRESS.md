@@ -1,5 +1,28 @@
 # Project Progress - SAM_Validation (2026-Q4)
 
+## S06 installed-build provenance documentation closeout - 2026-10-20
+
+- Status: SAM-BIM/SAM_Validation#16 (`docs/s06-installed-build-provenance`) was merged into `sow/2026-Q4` as merge commit `e9a83df0c2e1162d0a22eb1e010a508044117e12`. Its parents are base `68eded0060047af714853a02a152fb9c960bfeb1` and approved exact head `ed7a878a993f2052d39d7ee9ba257b25aad40d3b`.
+  - The owner gave explicit approval in chat on 2026-10-20.
+  - Immediate live recheck: not draft, MERGEABLE/CLEAN, Build and SPDX success, no reviews or review comments, `sow/2026-Q4` unprotected.
+  - Command: `gh pr merge 16 --repo SAM-BIM/SAM_Validation --merge --match-head-commit ed7a878a...`. No auto-merge or bypass.
+- Completed: documentation only, recording the owner-accepted S06 limitation of 2026-10-20. `docs/benchmark/SCHEMA.md` now states the following:
+  - In a SAM_Deploy installer build without overrides, `samCommit` and `runnerCommit` hold the SAM_Deploy build revision.
+  - The installer stamp is `<year>.<quarter>.<run>.0+<revision>`. SAM_UI's run manifest records it under `provenance.application`: in `entryAssembly.informationalVersion` and `components[].informationalVersion`, with the extracted SHA in `sourceRevision`. `sourceRevisionOf` is only explanatory text.
+  - The repository revisions come from `git ls-tree <revision> SAM SAM_Tas SAM_OpenStudio` in SAM_Deploy.
+  - Existing records, including S05 developer runs with `SAM_COMMIT`, keep their meaning.
+
+  No schema version, validator, producer, stamping, physics, units or tolerance change. Files: `docs/benchmark/SCHEMA.md` and `docs/benchmark/S06-INSTALLED-PROVENANCE-PR.md` (the record). Head `cb84fd9` was corrected by `ed7a878`: the stamp location, after review.
+- Hosted checks inspected:
+  - `cb84fd9`: Build [39398892361](https://github.com/SAM-BIM/SAM_Validation/actions/runs/39398892361).
+  - `ed7a878`: Build [39403186623](https://github.com/SAM-BIM/SAM_Validation/actions/runs/39403186623) and SPDX [39403186462](https://github.com/SAM-BIM/SAM_Validation/actions/runs/39403186462), both PASS.
+  - Post-merge Q4 Build [39409164929](https://github.com/SAM-BIM/SAM_Validation/actions/runs/39409164929) PASS on `e9a83df0`.
+  - Field names and values were checked against the committed SAM_Deploy#66 genuine-installer manifests (x1/x2/x3).
+- Evidence: the S06 candidate SAM_Deploy `717533c` reported `samCommit` = `runnerCommit` = `717533c`. Its gitlinks give SAM `df27563b`, SAM_Tas `e84aeff6` and SAM_OpenStudio `1f4bf60c`.
+- Cleanup: task remote `docs/s06-installed-build-provenance` was exactly at the approved head, fully merged and not used by any open PR. It was deleted with `--force-with-lease=...:ed7a878a`, and the remote ref is absent. The checkout was fast-forwarded to Q4 and the local branch deleted. Worktrees and frozen quarters were preserved.
+- Remaining: none for this repository. SAM_Deploy keeps its SAM_Validation gitlink at `68eded00`, because this change ships no binary. Per-repository stamping, or a field naming the revision kind, would be a separate schema or build change. Provenance check 9 stays "Not PASS: accepted limitation".
+- Exact next step: none here. S06 continues in SAM_Deploy#66 and the SAM roadmap closeout. This docs-only post-merge entry is the only base file change.
+
 ## Q4 comparison presentation PR15 closeout - 2026-10-17
 
 - Status: SAM-BIM/SAM_Validation#15 merged into `sow/2026-Q4` as merge commit `912ae94ef68af20b437fc92ec7e8891fd1cb640f` (parents: base `8fa79f5c8559c2db11e0ce2a26193e5ccad80e79` and approved exact head `4a7da6b1821d303d183fe87d275b5d0aaf05460e`). Owner explicitly authorized this pin and order in the gated merge instruction. Immediate live recheck: not draft, MERGEABLE/CLEAN, Build/SPDX success, no submitted reviews or review threads; no branch protection/rules required an additional submitted approval. Merge used `gh pr merge 15 --repo SAM-BIM/SAM_Validation --merge --match-head-commit 4a7da6b1821d303d183fe87d275b5d0aaf05460e`; no auto-merge or administrative bypass.
