@@ -26,8 +26,8 @@ Unknown fields do not change the meaning of known fields. A writer must not emit
 | `sourceFileHash` | string or null | SHA-256 of the exact input model-file bytes; null only when failure prevents hashing |
 | `canonicalModelHash` | string or null | SHA-256 of the canonical SAM representation; null only when failure prevents canonicalization |
 | `canonicalizationVersion` | string | Semantic version of the canonicalization rules |
-| `samCommit` | string | SAM source revision used for the run |
-| `runnerCommit` | string | Producer repository revision used for the run |
+| `samCommit` | string | SAM source revision used for the run; in a SAM_Deploy installer build, the SAM_Deploy build revision (see [Revision fields in installer builds](#revision-fields-in-installer-builds)) |
+| `runnerCommit` | string | Producer repository revision used for the run; in a SAM_Deploy installer build, the SAM_Deploy build revision (same section) |
 | `engine` | object | Engine kind, display name, engine version, and SDK version |
 | `route` | string | Exact route identifier; routes are never inferred from engine kind |
 | `weather` | object | Portable identity plus exact-file SHA-256 |
@@ -42,6 +42,24 @@ Unknown fields do not change the meaning of known fields. A writer must not emit
 Hashes use `sha256:` followed by 64 lowercase hexadecimal characters. `sourceFileHash` proves byte equality of the input file. `canonicalModelHash` proves equality under the named canonicalization rules; it must be calculated independently of the source-file bytes. One hash must never be copied into the other merely because the current serialization happens to match.
 
 For a successful run, both model hashes and the weather hash are required. A failure document may use `null` only for a hash that could not be computed, and must explain the reason in `warnings` or `notes`. `canonicalizationVersion` is required on every document, including failures: a document that could not compute a canonical hash must still declare which rules it would have used. Canonicalization rules must remove non-semantic ordering and formatting variation without removing model content that can affect simulation; they are specified in full under [Canonical model hashing](#canonical-model-hashing).
+
+### Revision fields in installer builds
+
+Accepted limitation (owner decision, roadmap S06, 2026-10-20). The producers resolve `samCommit` and `runnerCommit` in this order:
+1. the `--sam-commit` / `--runner-commit` argument;
+2. the `SAM_COMMIT` / `RUNNER_COMMIT` environment variable;
+3. the `+<revision>` build metadata of the InformationalVersion, of `SAM.Analytical` for `samCommit` and of the producer's own assembly for `runnerCommit`.
+
+A SAM_Deploy installer build stamps every assembly with the SAM_Deploy commit it was built from. So a producer run from an installed build, without overrides, writes that **SAM_Deploy build revision** into both fields, not the SAM or producer repository revision. The field alone does not say which kind of revision it holds. A SAM_Deploy installer build is recognisable by its stamp: the InformationalVersion `<year>.<quarter>.<run>.0+<SAM_Deploy revision>` on the producer and SAM assemblies. SAM_UI's run manifest records it under `provenance.application`:
+- the full stamp in `entryAssembly.informationalVersion` and in each `components[].informationalVersion`;
+- the extracted revision in `sourceRevision`.
+
+`sourceRevisionOf` is explanatory text that says where `sourceRevision` comes from; it is not a revision or a stamp.
+
+To recover the actual source revisions, read the gitlinks that the SAM_Deploy revision pins:
+`git ls-tree <SAM_Deploy revision> SAM SAM_Tas SAM_OpenStudio` in `SAM-BIM/SAM_Deploy`. The SAM entry gives `samCommit`; SAM_Tas gives the Tas producer's `runnerCommit`, and SAM_OpenStudio the OpenStudio producer's.
+
+Existing documents keep their meaning and are not rewritten. Developer-built runs that set `SAM_COMMIT` (S05 and earlier), and runs whose producers resolved a local Git revision, record repository revisions. Per-repository stamping of installer builds is not implemented. Changing these fields' meaning, or adding a field that names the revision kind, is a schema change under the [version policy](#version-and-compatibility-policy).
 
 Engine fields are:
 
